@@ -34,6 +34,7 @@ class Config:
     def _get_notif(config):
         default_notifier = {
             'queue_size': 100,
+            'frequency': 5,
         }
         
         notif_conf = config['notifier']

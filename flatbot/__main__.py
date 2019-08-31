@@ -29,15 +29,29 @@ def setup_firebase():
             'One must provide credentials path in GOOGLE_APPLICATION_CREDENTIALS environment variable!'
         )
 
+async def start_background_tasks(app, notifier, config):
+    freq = config.notifier['frequency']
 
-def setup_bot(app, loop):
+    async def notify():
+        while True:
+            await notifier.notify()
+            await asyncio.sleep(60 * freq)
+
+    app['result_listener'] = app.loop.create_task(notifier.listen)
+    app['notifier'] = app.loop.create_task(notify)
+
+def setup_bot(app):
     config = config.Config() 
-    queue = asyncio.Queue(loop=loop, maxsize=config.notifier['queue_size'])
+    queue = asyncio.Queue(loop=app.loop, maxsize=config.notifier['queue_size'])
     notifier = Notifier(queue)
-    scheduler = Scheduler(config, queue)
     
+    scheduler = Scheduler(config, queue)    
     app['scheduler'] = scheduler
-    app.on_startup.append(...) 
+    
+    app.on_startup.append(
+        lambda app: start_background_tasks(app, notifier, config)
+    )
+
 
 def setup_api(app):
     # Setup session storage.
@@ -59,10 +73,9 @@ def setup_api(app):
 def main():
     setup_firebase()
 
-    loop = asyncio.get_event_loop()
-    app = web.Application(loop=loop) 
+    app = web.Application() 
     setup_api(app)
-    setup_bot(app, loop)
+    setup_bot(app)
 
     ssl_context = ssl_context()
     web.run_app(app, host=config.host, ssl_context=ssl_context)

@@ -7,7 +7,7 @@ class Notifier:
         self.queue = queue
         self.results = []
         
-    async def receive(self):
+    async def listen(self):
         while True:
             result = await self.queue.get()
             self.results.append(result)

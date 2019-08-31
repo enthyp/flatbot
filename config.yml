@@ -2,6 +2,7 @@ host: '192.168.100.106'
 port: '8443'
 notifier: 
  queue_size: 100
+ frequency: 5
 scraper:
  item_limit: 100
 
