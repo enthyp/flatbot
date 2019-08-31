@@ -2,6 +2,8 @@ import re
 import aiohttp
 from lxml import etree
 
+from flatbot import config
+
 
 class ScrapeResult:
     def __init__(self, name, price):
@@ -17,7 +19,7 @@ class BaseScraper:
         self.base_url = base_url
         self.timespan = span
         self.result_queue = result_queue
-        self.item_limit = 100  # TODO: magic
+        self.item_limit = config.scraper['item_limit']
 
     class SpanExceeded(Exception):
         pass

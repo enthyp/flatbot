@@ -32,7 +32,7 @@ def setup_firebase():
 
 def setup_bot(app, loop):
     config = config.Config() 
-    queue = asyncio.Queue(loop=loop, maxsize=100)
+    queue = asyncio.Queue(loop=loop, maxsize=config.notifier['queue_size'])
     notifier = Notifier(queue)
     scheduler = Scheduler(config, queue)
     
@@ -65,7 +65,7 @@ def main():
     setup_bot(app, loop)
 
     ssl_context = ssl_context()
-    web.run_app(app, host='192.168.100.106', ssl_context=ssl_context)
+    web.run_app(app, host=config.host, ssl_context=ssl_context)
 
 
 if __name__ == '__main__':

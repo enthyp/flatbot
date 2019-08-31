@@ -1,4 +1,8 @@
 host: '192.168.100.106'
 port: '8443'
+notifier: 
+ queue_size: 100
+scraper:
+ item_limit: 100
 
 # TODO: anything else tb configured at startup?
