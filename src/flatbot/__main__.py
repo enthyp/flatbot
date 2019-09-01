@@ -40,8 +40,8 @@ async def start_background_tasks(app, notifier, config):
             await notifier.notify()
             await asyncio.sleep(60 * freq)
 
-    app['result_listener'] = app.loop.create_task(notifier.listen)
-    app['notifier'] = app.loop.create_task(notify)
+    app['result_listener'] = app.loop.create_task(notifier.listen())
+    app['notifier'] = app.loop.create_task(notify())
 
 
 def setup_bot(app, config): 
@@ -52,7 +52,7 @@ def setup_bot(app, config):
     app['scheduler'] = scheduler
 
     async def start_background_wrapper(app):
-        start_background_tasks(app, notifier, config)
+        await start_background_tasks(app, notifier, config)
  
     app.on_startup.append(start_background_wrapper)
 

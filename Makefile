@@ -1,5 +1,5 @@
 ROOT_PATH := /home/jlanecki/AGH/python/flatbot
-
+PACKAGE_PATH := $(ROOT_PATH)/src/flatbot
 
 .PHONY: cert
 cert:
@@ -18,5 +18,8 @@ cert:
 
 .PHONY: clean
 clean: 
-	@rm -rf $(ROOT_PATH)/api/__pycache__ \
-		$(ROOT_PATH)/bot/__pycache__
+	@rm -rf \
+		$(PACKAGE_PATH)/__pycache__ \
+		$(PACKAGE_PATH)/api/__pycache__ \
+		$(PACKAGE_PATH)/bot/__pycache__ \
+		$(ROOT_PATH)/tests/__pycache__

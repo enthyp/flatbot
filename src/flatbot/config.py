@@ -3,7 +3,9 @@ import yaml
 import warnings
 from flatbot.bot.scraper import GumtreeScraper
 
-ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+# TODO: these directories would not be contained in the package
+# so their paths should be passed by the user when running the server.
+ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
 SSL_PATH = os.path.join(ROOT_PATH, 'ssl')
 DATA_PATH = os.path.join(ROOT_PATH, 'data')
 CONFIG_PATH = os.path.join(ROOT_PATH, 'config.yml')
