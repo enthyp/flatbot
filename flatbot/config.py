@@ -1,8 +1,7 @@
 import os
 import yaml
 import warnings
-import firebase_admin
-from flatbot.scraper import GumtreeScraper
+from flatbot.bot.scraper import GumtreeScraper
 
 ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 SSL_PATH = os.path.join(ROOT_PATH, 'ssl')
@@ -13,11 +12,11 @@ CONFIG_PATH = os.path.join(ROOT_PATH, 'config.yml')
 class Config:
     def __init__(self):
         conf_dict = self._get_conf(CONFIG_PATH)
-        self.host = config.get('host', '0.0.0.0')
-        self.port = config.get('port', '84443')
+        self.host = conf_dict.get('host', '0.0.0.0')
+        self.port = conf_dict.get('port', '84443')
          
-        self.notifier = self._get_notif(config).get('notifier', default_notifier)        
-        self.scraper = self._get_scrap(config).get('scraper', default_scraper)
+        self.notifier = self._get_notif(conf_dict)
+        self.scraper = self._get_scrap(conf_dict)
     
     def _get_conf(self, config_path):
         try:
@@ -31,6 +30,7 @@ class Config:
             )
             return {}
     
+    @staticmethod
     def _get_notif(config):
         default_notifier = {
             'queue_size': 100,
@@ -45,7 +45,8 @@ class Config:
             raise ValueError('Invalid value in notifier configuration.')
 
         return default_notifier
-
+    
+    @staticmethod
     def _get_scrap(config):
         default_scraper = {
             'item_limit': 100,
@@ -58,5 +59,5 @@ class Config:
         except ValueError:
             raise ValueError('Invalid value in scraper configuration.')
 
-       return default_scraper
+        return default_scraper
 

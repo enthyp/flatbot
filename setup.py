@@ -3,8 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="flatbot",
     packages=[
-        'api',
-        'bot'
+        'flatbot',
     ],
     install_requires=[
         'lxml',
@@ -12,8 +11,8 @@ setup(
         'firebase_admin',
         'bcrypt',
         'aiohttp',
-        'aiohttp_session[secure]'
-        'aiohttp_security[session]'
+        'aiohttp_session[secure]',
+        'aiohttp_security[session]',
     ],
     entry_points={
         "console_scripts": [

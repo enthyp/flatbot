@@ -1,7 +1,8 @@
 import os
 import ssl
 import base64
-from cryptography import fernet
+
+from flatbot.config import SSL_PATH
 
 
 def ssl_context():

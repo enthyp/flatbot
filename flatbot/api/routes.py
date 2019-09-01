@@ -1,5 +1,5 @@
-from login.handlers import (
-    handle_login, handle_add,
+from flatbot.api.handlers import (
+    handle_login, handle_logout,
     handle_add, handle_delete
 )
 

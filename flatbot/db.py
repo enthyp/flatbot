@@ -11,7 +11,7 @@ def get_users():
     # TODO: real DB introduction should change this, then both users
     # and queries will be stored in DB and accessed async when needed,
     # not kept around in memory all the time.
-    pwd_path = os.path.join(DATA_PATH, 'pwd.yml')
+    pwd_path = os.path.join(DATA_PATH, 'users.yml')
 
     try:
         with open(pwd_path, 'r') as pwd_file:

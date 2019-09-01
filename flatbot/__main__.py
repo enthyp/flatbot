@@ -1,9 +1,12 @@
+import base64
 import os
 import sys
 import traceback as tb
 import yaml
+from cryptography import fernet
 
 import asyncio
+import firebase_admin
 from aiohttp import web
 from aiohttp_security import SessionIdentityPolicy, setup as setup_security
 from aiohttp_session import setup as setup_session
@@ -40,17 +43,18 @@ async def start_background_tasks(app, notifier, config):
     app['result_listener'] = app.loop.create_task(notifier.listen)
     app['notifier'] = app.loop.create_task(notify)
 
-def setup_bot(app):
-    config = config.Config() 
+
+def setup_bot(app, config): 
     queue = asyncio.Queue(loop=app.loop, maxsize=config.notifier['queue_size'])
-    notifier = Notifier(queue)
+    notifier = Notifier(app.loop, queue)
     
     scheduler = Scheduler(config, queue)    
     app['scheduler'] = scheduler
-    
-    app.on_startup.append(
-        lambda app: start_background_tasks(app, notifier, config)
-    )
+
+    async def start_background_wrapper(app):
+        start_background_tasks(app, notifier, config)
+ 
+    app.on_startup.append(start_background_wrapper)
 
 
 def setup_api(app):
@@ -66,19 +70,20 @@ def setup_api(app):
     # db_pool = await asyncpg.create_pool(database='', user='')
     # app['db_pool'] = db_pool
 
-    setup_security(app, SessionIdentityPolicy(), DumbAuthorizationPolicy(users))
+    setup_security(app, SessionIdentityPolicy(), DumbAuthorizationPolicy(app['users']))
     setup_routes(app)
 
 
 def main():
     setup_firebase()
 
+    conf = config.Config()
     app = web.Application() 
     setup_api(app)
-    setup_bot(app)
+    setup_bot(app, conf)
 
-    ssl_context = ssl_context()
-    web.run_app(app, host=config.host, ssl_context=ssl_context)
+    context = ssl_context()
+    web.run_app(app, host=conf.host, ssl_context=context)
 
 
 if __name__ == '__main__':

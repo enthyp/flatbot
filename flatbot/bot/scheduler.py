@@ -1,6 +1,8 @@
 import re
 import asyncio
 
+from flatbot.bot.scraper import GumtreeScraper
+
 
 class Scrape:
     def __init__(self, base_url, span, freq):
