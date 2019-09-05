@@ -26,3 +26,12 @@ def get_users():
         return users
 
 
+class Storage:
+    def __init__(self):
+        self.results = {}
+
+    def update(self, id, results):
+        diff = results - self.results.get(id, set())
+        if results:
+            self.results[id] = results
+        return diff

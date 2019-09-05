@@ -1,60 +1,29 @@
 import base64
-import os
-import sys
-import traceback as tb
-import yaml
 from cryptography import fernet
 
-import asyncio
-import firebase_admin
 from aiohttp import web
 from aiohttp_security import SessionIdentityPolicy, setup as setup_security
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
-from flatbot import db, config
+from flatbot import config, db
 from flatbot.api.auth import DumbAuthorizationPolicy
 from flatbot.api.routes import setup_routes
 from flatbot.api.ssl import ssl_context
-from flatbot.bot.notifications import Notifier
+from flatbot.bot.notifications import Notifier, setup_firebase
 from flatbot.bot.scheduler import Scheduler
 
 
-class FirebaseException(Exception):
-    pass
+async def cleanup_background_tasks(app):
+    await app['scheduler'].cancel_tasks()
 
 
-def setup_firebase():
-    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-        firebase_admin.initialize_app()
-    else:
-        raise FirebaseException(
-            'One must provide credentials path in GOOGLE_APPLICATION_CREDENTIALS environment variable!'
-        )
-
-async def start_background_tasks(app, notifier, config):
-    freq = config.notifier['frequency']
-
-    async def notify():
-        while True:
-            await notifier.notify()
-            await asyncio.sleep(60 * freq)
-
-    app['result_listener'] = app.loop.create_task(notifier.listen())
-    app['notifier'] = app.loop.create_task(notify())
-
-
-def setup_bot(app, config): 
-    queue = asyncio.Queue(loop=app.loop, maxsize=config.notifier['queue_size'])
-    notifier = Notifier(app.loop, queue)
-    
-    scheduler = Scheduler(config, queue)    
+def setup_bot(app, config):
+    storage = db.Storage()
+    notifier = Notifier()
+    scheduler = Scheduler(storage, notifier, config)
     app['scheduler'] = scheduler
-
-    async def start_background_wrapper(app):
-        await start_background_tasks(app, notifier, config)
- 
-    app.on_startup.append(start_background_wrapper)
+    app.on_cleanup.append(cleanup_background_tasks)
 
 
 def setup_api(app):
@@ -88,4 +57,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

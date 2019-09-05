@@ -1,7 +1,6 @@
 import os
 import yaml
 import warnings
-from flatbot.bot.scraper import GumtreeScraper
 
 # TODO: these directories would not be contained in the package
 # so their paths should be passed by the user when running the server.
@@ -12,8 +11,8 @@ CONFIG_PATH = os.path.join(ROOT_PATH, 'config.yml')
 
 
 class Config:
-    def __init__(self):
-        conf_dict = self._get_conf(CONFIG_PATH)
+    def __init__(self, path=CONFIG_PATH):
+        conf_dict = self._get_conf(path)
         self.host = conf_dict.get('host', '0.0.0.0')
         self.port = conf_dict.get('port', '84443')
          

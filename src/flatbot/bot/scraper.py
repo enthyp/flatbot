@@ -1,8 +1,5 @@
-import re
 import aiohttp
 from lxml import etree
-
-from flatbot import config
 
 
 class ScrapeResult:
@@ -15,11 +12,9 @@ class ScrapeResult:
 
 
 class BaseScraper:
-    def __init__(self, base_url, span, result_queue):
+    def __init__(self, base_url, conf):
         self.base_url = base_url
-        self.timespan = span
-        self.result_queue = result_queue
-        self.item_limit = config.scraper['item_limit']
+        self.item_limit = conf.scraper['item_limit']
 
     class SpanExceeded(Exception):
         pass
@@ -28,10 +23,10 @@ class BaseScraper:
         async with aiohttp.ClientSession() as session:
             next_page_available = True
             url = self.base_url
-            count = 0
+            results = set()
 
-            while next_page_available and count < self.item_limit:
-                async with session.get(url) as response:
+            while next_page_available and len(results) < self.item_limit:
+                async with (await session.get(url)) as response:
                     html = await response.text()
 
                     site = self.parse(html)
@@ -39,18 +34,19 @@ class BaseScraper:
 
                     try:
                         for item in items:
-                            if count >= self.item_limit:
+                            if len(results) >= self.item_limit:
                                 break
 
-                            result = self.parse_item(item)
-                            if result:
-                                await self.result_queue.put(result)
-                                count += 1
+                            item = self.parse_item(item)
+                            if item:
+                                results.add(item)
+
                         url = self.next_page(site)
                         if not url:
                             next_page_available = False
-                    except SpanExceeded:
+                    except BaseScraper.SpanExceeded:
                         break
+        return results
 
     @staticmethod
     def parse(html):
@@ -64,18 +60,11 @@ class BaseScraper:
     def get_items(site):
         raise NotImplementedError
 
-    @staticmethod
-    def parse_item(node):
+    def parse_item(self, node):
         raise NotImplementedError
 
 
 class GumtreeScraper(BaseScraper):
-    def __init__(self, base_url, span, result_queue):
-        super().__init__(base_url, span, result_queue)
-        h_string = r'(?P<h>(?P<h_t>\d*)\s*godzin)'
-        m_string = r'(?P<m>(?P<m_t>\d*)\s*minut)' 
-        self.matcher = re.compile(h_string + r'|' + m_string)
-
     @staticmethod
     def parse(html):
         return etree.fromstring(html, etree.HTMLParser())
@@ -90,33 +79,11 @@ class GumtreeScraper(BaseScraper):
         tiles = site.xpath('//div[@class="tileV1"]')
         return tiles
 
-    @staticmethod
-    def parse_item(node):
+    def parse_item(self, node):
         title = node.xpath('./div[@class="title"]/a/text()')
         price = node.xpath('./div[@class="info"]/span[@class="price-text"]//text()')
-        posted = node.xpath('./div[@class="info"]/div[@class="creation-date"]//text()')
-        if posted:
-            
-            minutes_ago = self._parse_posted(posted)
-            if minutes_ago and minutes_ago > self.timespan:
-                raise SpanExceeded()
- 
-        return ScrapeResult(title[0].strip(), price[0].strip())
-
-    @staticmethod
-    def _parse_posted(posted):
-        match = self.matcher.search(posted)
-        if not match:
-            return None
-
-        if match['h']:
-            if match['h_t']:
-                return int(match['h_t']) * 60
-            else:
-                return 60
+        
+        if title and price: 
+            return ScrapeResult(title[0].strip(), price[0].strip())
         else:
-            if match['m_t']:
-                return int(match['m_t'])
-            else:
-                return 1
-
+            return None        

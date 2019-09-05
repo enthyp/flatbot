@@ -19,6 +19,7 @@ cert:
 .PHONY: clean
 clean: 
 	@rm -rf \
+		$(ROOT_PATH)/__pycache__ \
 		$(PACKAGE_PATH)/__pycache__ \
 		$(PACKAGE_PATH)/api/__pycache__ \
 		$(PACKAGE_PATH)/bot/__pycache__ \

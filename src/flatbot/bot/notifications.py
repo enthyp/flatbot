@@ -1,31 +1,36 @@
+import os
+import asyncio
+import firebase_admin
 from firebase_admin import messaging
+
+class FirebaseException(Exception):
+    pass
+
+
+def setup_firebase():
+    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+        firebase_admin.initialize_app()
+    else:
+        raise FirebaseException(
+            'One must provide credentials path in GOOGLE_APPLICATION_CREDENTIALS environment variable!'
+        )
 
 
 class Notifier:
-    def __init__(self, loop, queue):
-        self.loop = loop
-        self.queue = queue
-        self.results = []
-        
-    async def listen(self):
-        while True:
-            result = await self.queue.get()
-            self.results.append(result)
-
-    async def notify(self):
-        topic_name = 'flats'
-        payload = self.wrap(self.results)
+    async def notify(self, channel_id, updates):
+        payload = self.wrap(updates)
 
         if payload:
             message = messaging.Message(
                 data=payload,
-                topic=topic_name
+                topic=channel_id
             )
-            
-            await self.loop.run_in_executor(
-                None, lambda: messaging.send(message) 
+
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+               None, lambda: messaging.send(message)
             )
-             
+
     @staticmethod
     def wrap(results):
         return {r.name: str(r) for r in results}

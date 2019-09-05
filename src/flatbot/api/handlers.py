@@ -1,10 +1,11 @@
 from aiohttp import web
 from aiohttp_security import (
-    remember, forget, authorized_userid,
-    check_permission, check_authorized,
+    remember, forget, check_authorized,
+    authorized_userid
 )
 
 from flatbot.api.auth import check_credentials
+from flatbot.bot.scheduler import UnhandledUrl, BadRequest
 
 
 async def handle_login(request):
@@ -31,19 +32,35 @@ async def handle_logout(request):
 
 async def handle_add(request):
     await check_authorized(request)
+    uid = await authorized_userid(request)
 
+    form = await request.post()
     try:
-        login, pwd = form['url'], form['password']
+        url = form['base_url']
     except KeyError:
         raise web.HTTPBadRequest()    
 
-
     scheduler = request.app['scheduler']
-
-    scheduler.enqueue()
-    raise web.HTTPOk()
+    try:
+        channel_id = scheduler.enqueue(uid, url)
+        return web.Response(text=channel_id)
+    except UnhandledUrl:
+        raise web.HTTPBadRequest()
 
 
 async def handle_delete(request):
-    raise web.HTTPOk()
+    await check_authorized(request)
+    uid = await authorized_userid(request)
 
+    form = await request.post()
+    try:
+        url = form['base_url']
+    except KeyError:
+        raise web.HTTPBadRequest()
+
+    scheduler = request.app['scheduler']
+    try:
+        scheduler.remove(uid, url)
+        raise web.HTTPOk()
+    except BadRequest:
+        raise web.HTTPBadRequest()
