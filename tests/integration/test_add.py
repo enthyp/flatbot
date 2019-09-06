@@ -33,4 +33,4 @@ async def test_add(aiohttp_client):
     }
     resp = await client.post('/add', data=data, cookies=resp.cookies)
     assert resp.status == 200
-    await asyncio.sleep(10)
+    await asyncio.sleep(3)

@@ -1,6 +1,5 @@
 import re
 import asyncio
-import contextlib
 import uuid
 
 from flatbot.bot.scraper import GumtreeScraper
@@ -36,14 +35,14 @@ class URLChannel:
                 diff = self.storage.update(id, results)
                 if diff:
                     await self.notifier.notify(self.id, results)
-                await asyncio.sleep(self.freq * 5)
+                await asyncio.sleep(self.freq * 60)
         except asyncio.CancelledError:
             pass
         except:
-            self.err_handler.on_error(self.id)
+            await self.err_handler.on_error(self.id)
 
     async def cancel(self):
-        if self.job:
+        if not self.cancelled():
             self.job.cancel()
             await self.job
 
@@ -85,7 +84,7 @@ class Scheduler:
                 channel.subscribe(uid)
                 channel.run()
                 self.channels[url] = channel
-                self.urls[id] = url
+                self.urls[channel_id] = url
             else:
                 raise UnhandledUrl()
 
@@ -121,5 +120,5 @@ class Scheduler:
         if not task.cancelled():
             await task.cancel()
 
-        del self.channels[url]
-        del self.urls[id]
+        self.channels.pop(url, None)
+        self.urls.pop(id, None)

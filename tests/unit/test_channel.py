@@ -47,19 +47,23 @@ async def test_run_ok(results, config_path, monkeypatch):
 
 
 async def test_run_fail(config_path):
+    channel_id = 1
     class MockScraper:
+        def __init__(self, id):
+            self.id = id
+
         async def run(self):
             raise Exception
 
     class MockHandler:
-        def on_error(self, id):
+        async def on_error(self, id):
             pass
 
-    mock_scraper = MockScraper()
+    mock_scraper = MockScraper(channel_id)
     notifier = notifications.Notifier()
     storage = Storage()
     config = Config(config_path)
-    channel = scheduler.URLChannel(id, mock_scraper, storage, notifier, MockHandler(), config)
+    channel = scheduler.URLChannel(channel_id, mock_scraper, storage, notifier, MockHandler(), config)
 
     channel.run()
     await asyncio.sleep(1)
