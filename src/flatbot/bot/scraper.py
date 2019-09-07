@@ -12,17 +12,15 @@ class ScrapeResult:
 
 
 class BaseScraper:
-    def __init__(self, base_url, conf):
-        self.base_url = base_url
+    def __init__(self, conf):
         self.item_limit = conf.scraper['item_limit']
 
     class SpanExceeded(Exception):
         pass
 
-    async def run(self):
+    async def run(self, url):
         async with aiohttp.ClientSession() as session:
             next_page_available = True
-            url = self.base_url
             results = set()
 
             while next_page_available and len(results) < self.item_limit:

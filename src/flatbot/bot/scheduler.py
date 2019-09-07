@@ -14,8 +14,9 @@ class BadRequest(Exception):
 
 
 class URLChannel:
-    def __init__(self, id, scraper, storage, notifier, err_handler, config):
-        self.id = id
+    def __init__(self, url, scraper, storage, notifier, err_handler, config):
+        self.id = str(uuid.uuid4())
+        self.url = url
         self.scraper = scraper
         self.storage = storage
         self.notifier = notifier
@@ -31,18 +32,18 @@ class URLChannel:
     async def _run(self):
         try:
             while True:
-                results = await self.scraper.run()
-                diff = self.storage.update(id, results)
+                results = await self.scraper.run(self.url)
+                diff = self.storage.update(self.id, results)
                 if diff:
                     await self.notifier.notify(self.id, results)
                 await asyncio.sleep(self.freq * 60)
         except asyncio.CancelledError:
             pass
         except:
-            await self.err_handler.on_error(self.id)
+            await self.err_handler.on_error(self.id, self.url)
 
     async def cancel(self):
-        if not self.cancelled():
+        if not self.cancelled:
             self.job.cancel()
             await self.job
 
@@ -52,9 +53,11 @@ class URLChannel:
     def unsubscribe(self, uid):
         self.clients.discard(uid)
 
+    @property
     def active(self):
         return True if self.clients else False
 
+    @property
     def cancelled(self):
         return self.job.cancelled() if self.job else True
 
@@ -69,35 +72,38 @@ class Scheduler:
         self.notifier = notifier
         self.config = config
         self.channels = {}
-        self.urls = {}
+        self.ids = {}
         self.matcher = re.compile(r'^(https://)?(www\.)?(?P<site>\w*)\.')
 
     def enqueue(self, uid, url):
-        channel = self.channels.get(url, None)
+        channel_id = self.ids.get(url, None)
 
-        if not channel:
+        if not channel_id:
             cls = self._choose_scraper(url)
             if cls:
-                scraper = cls(url, self.config)
-                channel_id = str(uuid.uuid4())
-                channel = URLChannel(channel_id, scraper, self.storage, self.notifier, self, self.config)
-                channel.subscribe(uid)
+                scraper = cls(self.config)
+                channel = URLChannel(url, scraper, self.storage, self.notifier, self, self.config)
                 channel.run()
-                self.channels[url] = channel
-                self.urls[channel_id] = url
+                self.channels[channel.id] = channel
+                self.ids[url] = channel.id
             else:
                 raise UnhandledUrl()
+        else:
+            channel = self.channels[channel_id]
 
+        channel.subscribe(uid)
         return channel.id
 
     async def remove(self, uid, url):
-        channel = self.channels.get(url, None)
-        if channel:
+        channel_id = self.ids.get(url, None)
+        if channel_id:
+            channel = self.channels[channel_id]
             channel.unsubscribe(uid)
-            if not channel.active():
+
+            if not channel.active:
                 await channel.cancel()
-                del channel
-                del self.urls[channel.id]
+                del self.ids[url]
+                del self.channels[channel_id]
         else:
             raise BadRequest()
 
@@ -113,12 +119,14 @@ class Scheduler:
         for t in self.channels.values():
             await t.cancel()
 
-    async def on_error(self, id):
-        url = self.urls[id]
-        task = self.channels[url]
+        self.ids = {}
+        self.channels = {}
 
-        if not task.cancelled():
-            await task.cancel()
+    async def on_error(self, channel_id, url):
+        channel = self.channels[channel_id]
 
-        self.channels.pop(url, None)
-        self.urls.pop(id, None)
+        if not channel.cancelled:
+            await channel.cancel()
+
+        del self.ids[url]
+        del self.channels[channel_id]

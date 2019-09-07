@@ -60,7 +60,7 @@ async def handle_delete(request):
 
     scheduler = request.app['scheduler']
     try:
-        scheduler.remove(uid, url)
+        await scheduler.remove(uid, url)
         raise web.HTTPOk()
     except BadRequest:
         raise web.HTTPBadRequest()
