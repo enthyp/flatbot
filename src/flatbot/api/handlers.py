@@ -15,6 +15,7 @@ async def handle_login(request):
     except KeyError:
         raise web.HTTPBadRequest()    
 
+    print("LOGIN: " + login, pwd)
     users = request.app['users']
     if await check_credentials(users, login, pwd):
         response = web.HTTPOk()
@@ -40,6 +41,7 @@ async def handle_add(request):
     except KeyError:
         raise web.HTTPBadRequest()    
 
+    print("ADD: " + url)
     scheduler = request.app['scheduler']
     try:
         channel_id = scheduler.enqueue(uid, url)

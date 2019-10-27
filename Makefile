@@ -19,8 +19,5 @@ cert:
 .PHONY: clean
 clean: 
 	@rm -rf \
-		$(ROOT_PATH)/__pycache__ \
-		$(PACKAGE_PATH)/__pycache__ \
-		$(PACKAGE_PATH)/api/__pycache__ \
-		$(PACKAGE_PATH)/bot/__pycache__ \
-		$(ROOT_PATH)/tests/__pycache__
+		`find $(ROOT_PATH) -name '__pycache__'`	\
+		$(PACKAGE_PATH).egg-info

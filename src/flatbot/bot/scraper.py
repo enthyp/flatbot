@@ -10,6 +10,15 @@ class ScrapeResult:
     def __str__(self):
         return 'price: {}'.format(self.price)
 
+    def __members(self):
+        return self.name, self.price
+
+    def __eq__(self, other):
+        return self.__members() == other.__members()
+
+    def __hash__(self):
+        return hash(self.__members())
+
 
 class BaseScraper:
     def __init__(self, conf):
@@ -21,7 +30,7 @@ class BaseScraper:
     async def run(self, url):
         async with aiohttp.ClientSession() as session:
             next_page_available = True
-            results = set()
+            results = []
 
             while next_page_available and len(results) < self.item_limit:
                 async with (await session.get(url)) as response:
@@ -37,7 +46,7 @@ class BaseScraper:
 
                             item = self.parse_item(item)
                             if item:
-                                results.add(item)
+                                results.append(item)
 
                         url = self.next_page(site)
                         if not url:
@@ -80,8 +89,9 @@ class GumtreeScraper(BaseScraper):
     def parse_item(self, node):
         title = node.xpath('./div[@class="title"]/a/text()')
         price = node.xpath('./div[@class="info"]/span[@class="price-text"]//text()')
-        
-        if title and price: 
+        date = node.xpath('./div[@class="info"]/div[@class="creation-date"]//text()')
+
+        if title and price and date:
             return ScrapeResult(title[0].strip(), price[0].strip())
         else:
             return None        

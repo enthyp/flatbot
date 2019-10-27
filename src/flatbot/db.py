@@ -30,8 +30,10 @@ class Storage:
     def __init__(self):
         self.results = {}
 
-    def update(self, id, results):
-        diff = results - self.results.get(id, set())
-        if results:
-            self.results[id] = results
+    def update(self, id, updates):
+        prev = self.results.get(id, [])
+        diff = [u for u in updates if u not in prev]
+
+        if diff:
+            self.results[id] = updates
         return diff

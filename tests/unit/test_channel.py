@@ -7,11 +7,11 @@ from flatbot.bot import notifications, scheduler, scraper
 
 
 results_list = [
-    {
+    [
         ("M1", "200"),
         ("M2", "300")
-    },
-    set()
+    ],
+    []
 ]
 
 @pytest.mark.parametrize('results', results_list)
@@ -27,7 +27,7 @@ async def test_run_ok(results, config_path, monkeypatch):
         def on_error(self, channel_id, url):
             pass
 
-    base_results = set([scraper.ScrapeResult(n, p) for n, p in results])
+    base_results = [scraper.ScrapeResult(n, p) for n, p in results]
     mock_scraper = MockScraper(base_results)
 
     async def dummy_notify(_, results):

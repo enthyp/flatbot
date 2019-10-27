@@ -1,5 +1,8 @@
 import os
 import asyncio
+from datetime import datetime as dt
+
+
 import firebase_admin
 from firebase_admin import messaging
 
@@ -18,9 +21,8 @@ def setup_firebase():
 
 class Notifier:
     async def notify(self, channel_id, updates):
-        payload = self.wrap(updates)
-
-        if payload:
+        if updates:
+            payload = self.wrap(updates)
             message = messaging.Message(
                 data=payload,
                 topic=channel_id
@@ -30,7 +32,11 @@ class Notifier:
             await loop.run_in_executor(
                None, lambda: messaging.send(message)
             )
+            print('Notified!')
 
     @staticmethod
     def wrap(results):
-        return {r.name: str(r) for r in results}
+        return {
+            "count": str(len(results)),
+            "date": dt.strftime(dt.now(), '%Y:%M:%d %H:%M')
+        }

@@ -34,9 +34,10 @@ class URLChannel:
             while True:
                 results = await self.scraper.run(self.url)
                 diff = self.storage.update(self.id, results)
+
                 if diff:
-                    await self.notifier.notify(self.id, results)
-                await asyncio.sleep(self.freq * 60)
+                    await self.notifier.notify(self.id, diff)
+                await asyncio.sleep(self.freq * 3)
         except asyncio.CancelledError:
             pass
         except:

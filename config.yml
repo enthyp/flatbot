@@ -5,6 +5,6 @@ notifier:
  queue_size: 100
 scraper:
  frequency: 1
- item_limit: 5
+ item_limit: 3
 
 # TODO: anything else tb configured at startup?
