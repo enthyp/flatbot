@@ -1,6 +1,5 @@
 import os
 import ssl
-import base64
 
 from flatbot.config import SSL_PATH
 

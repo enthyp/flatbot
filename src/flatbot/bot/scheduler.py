@@ -13,7 +13,7 @@ class BadRequest(Exception):
     pass
 
 
-class URLChannel:
+class Channel:
     def __init__(self, url, scraper, storage, notifier, err_handler, config):
         self.id = str(uuid.uuid4())
         self.url = url
@@ -21,9 +21,9 @@ class URLChannel:
         self.storage = storage
         self.notifier = notifier
         self.err_handler = err_handler
+        self.clients = set()
 
         self.freq = config.scraper['frequency']
-        self.clients = set()
         self.job = None
 
     def run(self):
@@ -83,7 +83,7 @@ class Scheduler:
             cls = self._choose_scraper(url)
             if cls:
                 scraper = cls(self.config)
-                channel = URLChannel(url, scraper, self.storage, self.notifier, self, self.config)
+                channel = Channel(url, scraper, self.storage, self.notifier, self, self.config)
                 channel.run()
                 self.channels[channel.id] = channel
                 self.ids[url] = channel.id

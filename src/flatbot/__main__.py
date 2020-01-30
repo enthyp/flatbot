@@ -32,7 +32,7 @@ def setup_api(app):
     secret_key = base64.urlsafe_b64decode(fernet_key)
     setup_session(app, EncryptedCookieStorage(secret_key))
     
-    # Load registered users into memory (for now).         
+    # Load registered users into memory (for now).
     app['users'] = db.get_users()
 
     # Setup database and DB-based authorization policy (in the future).

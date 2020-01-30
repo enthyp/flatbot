@@ -18,8 +18,9 @@ class Config:
          
         self.notifier = self._get_notif(conf_dict)
         self.scraper = self._get_scrap(conf_dict)
-    
-    def _get_conf(self, config_path):
+
+    @staticmethod
+    def _get_conf(config_path):
         try:
             with open(config_path, 'r') as config_file:
                 config = yaml.safe_load(config_file)

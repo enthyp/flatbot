@@ -1,4 +1,5 @@
 import time
+import logging
 from flatbot.config import Config
 from flatbot.bot.scraper import GumtreeScraper
 
@@ -19,3 +20,5 @@ async def test_gumtree_scraper(config_path):
         results = new_results
         k -= 1
         time.sleep(1)
+
+    logging.debug(results)

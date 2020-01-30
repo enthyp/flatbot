@@ -21,18 +21,17 @@ def setup_firebase():
 
 class Notifier:
     async def notify(self, channel_id, updates):
-        if updates:
-            payload = self.wrap(updates)
-            message = messaging.Message(
-                data=payload,
-                topic=channel_id
-            )
+        payload = self.wrap(updates)
+        message = messaging.Message(
+            data=payload,
+            topic=channel_id
+        )
 
-            loop = asyncio.get_running_loop()
-            await loop.run_in_executor(
-               None, lambda: messaging.send(message)
-            )
-            print('Notified!')
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(
+           None, lambda: messaging.send(message)
+        )
+        print('Notified!')
 
     @staticmethod
     def wrap(results):
