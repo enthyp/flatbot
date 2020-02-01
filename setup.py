@@ -4,6 +4,7 @@ setup(
     name='flatbot',
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
+    python_requires='>=3.7.6',
     install_requires=[
         'lxml',
         'pyyaml',

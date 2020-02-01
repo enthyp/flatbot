@@ -12,7 +12,7 @@ class Config:
     def __init__(self, path=DEFAULT_CONFIG_PATH):
         conf_dict = self._get_conf(path)
         self.host = conf_dict.get('host', '0.0.0.0')
-        self.port = conf_dict.get('port', '84443')
+        self.port = conf_dict.get('port', 84443)
 
         self.db = self._get_db(conf_dict)
         self.scraper = self._get_scraper(conf_dict)
