@@ -7,12 +7,13 @@ setup(
     install_requires=[
         'lxml',
         'pyyaml',
-        'peewee',
         'firebase_admin',
         'bcrypt',
+        'cryptography',
         'aiohttp',
         'aiohttp_session[secure]',
         'aiohttp_security[session]',
+        'aiopg[sa]'
     ],
     tests_require=[
         'pytest',

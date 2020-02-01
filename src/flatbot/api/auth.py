@@ -1,10 +1,13 @@
 import bcrypt
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 
+# TODO: update both methods
+# TODO: provide SQL scripts to setup tables and manage users
+# an alternative would be to provide an admin endpoint - maybe some day
 
-class DumbAuthorizationPolicy(AbstractAuthorizationPolicy):
-    def __init__(self, users):
-        self.users = users
+class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
+    def __init__(self, db):
+        self.db = db
 
     async def authorized_userid(self, identity):
         if identity in self.users.keys():

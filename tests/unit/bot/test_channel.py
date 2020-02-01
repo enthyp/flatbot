@@ -3,7 +3,7 @@ import pytest
 
 from flatbot.config import Config
 from flatbot.db import Storage
-from flatbot.bot import notifications, scheduler, scraper
+from flatbot.bot import notifications, manager, scraper
 
 
 results_list = [
@@ -37,7 +37,7 @@ async def test_run_ok(results, config_path, monkeypatch):
     monkeypatch.setattr(notifier, 'notify', dummy_notify)
     storage = Storage()
     config = Config(config_path)
-    channel = scheduler.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
+    channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
 
     channel.run()
     await asyncio.sleep(1)
@@ -57,7 +57,7 @@ async def test_run_fail(config_path):
     mock_scraper = MockScraper()
     notifier = notifications.Notifier()
     storage = Storage()
-    channel = scheduler.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
+    channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
 
     channel.run()
     await asyncio.sleep(1)

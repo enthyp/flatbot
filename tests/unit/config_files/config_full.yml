@@ -1,11 +1,10 @@
-host: '192.168.100.106'
-port: '8443'
-ssl_path: './ssl'
+host: '0.0.0.0'
+port: '8080'
 db:
  name: 'db'
  user: 'root'
  password: 'root'
- host: '192.168.100.106'
+ host: '0.0.0.0'
  port: 5432
 scraper:
  frequency: 1

@@ -2,22 +2,22 @@ import os
 import yaml
 import warnings
 
-# TODO: these directories would not be contained in the package
-# so their paths should be passed by the user when running the server.
+
 ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
-SSL_PATH = os.path.join(ROOT_PATH, 'ssl')
-DATA_PATH = os.path.join(ROOT_PATH, 'data')
-CONFIG_PATH = os.path.join(ROOT_PATH, 'config.yml')
+DEFAULT_CONFIG_PATH = os.path.join(ROOT_PATH, 'config_full.yml')
+DEFAULT_SSL_PATH = os.path.join(ROOT_PATH, 'ssl')
 
 
 class Config:
-    def __init__(self, path=CONFIG_PATH):
+    def __init__(self, path=DEFAULT_CONFIG_PATH):
         conf_dict = self._get_conf(path)
         self.host = conf_dict.get('host', '0.0.0.0')
         self.port = conf_dict.get('port', '84443')
-         
-        self.notifier = self._get_notif(conf_dict)
-        self.scraper = self._get_scrap(conf_dict)
+
+        self.db = self._get_db(conf_dict)
+        self.scraper = self._get_scraper(conf_dict)
+
+        self.ssl_path = conf_dict.get('ssl_path', DEFAULT_SSL_PATH)
 
     @staticmethod
     def _get_conf(config_path):
@@ -31,30 +31,34 @@ class Config:
                 RuntimeWarning
             )
             return {}
-    
-    @staticmethod
-    def _get_notif(config):
-        default_notifier = {
-            'queue_size': 100,
-            'frequency': 5,
-        }
-        
-        notif_conf = config['notifier']
-        default_notifier.update(notif_conf)
-        try:
-            [int(v) for k, v in default_notifier.items()]
-        except ValueError:
-            raise ValueError('Invalid value in notifier configuration.')
 
-        return default_notifier
+    @staticmethod
+    def _get_db(config):
+        default_db = {
+            'name': 'db',
+            'user': 'root',
+            'password': 'root',
+            'host': '0.0.0.0',
+            'port': 5432
+        }
+
+        db_conf = config.get('db', {})
+        default_db.update(db_conf)
+        try:
+            int(default_db['port'])
+        except ValueError:
+            raise ValueError('Invalid value in database configuration.')
+
+        return default_db
     
     @staticmethod
-    def _get_scrap(config):
+    def _get_scraper(config):
         default_scraper = {
+            'frequency': 5,
             'item_limit': 100,
         }
 
-        scrap_conf = config['scraper']
+        scrap_conf = config.get('scraper', {})
         default_scraper.update(scrap_conf) 
         try:
             [int(v) for k, v in default_scraper.items()]
@@ -62,4 +66,3 @@ class Config:
             raise ValueError('Invalid value in scraper configuration.')
 
         return default_scraper
-

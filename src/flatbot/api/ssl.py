@@ -1,14 +1,15 @@
 import os
 import ssl
 
-from flatbot.config import SSL_PATH
 
-
-def ssl_context():
+def ssl_context(config):
     # Set up SSL for HTTPS.
-    cert_path = os.path.join(SSL_PATH, 'cert.pem')
-    key_path = os.path.join(SSL_PATH, 'private.pem')
-    dh_path = os.path.join(SSL_PATH, 'dhparam.pem')
+    ssl_path = config.ssl_path
+
+    cert_path, key_path, dh_path = map(
+        lambda file: os.path.join(ssl_path, file),
+        ['cert.pem', 'private.pem', 'dhparam.pem']
+    )
 
     ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     ssl_context.load_cert_chain(cert_path, key_path)

@@ -10,7 +10,7 @@ class FirebaseException(Exception):
     pass
 
 
-def setup_firebase():
+def setup():
     if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
         firebase_admin.initialize_app()
     else:

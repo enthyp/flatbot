@@ -1,12 +1,7 @@
-import re
 import asyncio
 import uuid
 
-from flatbot.bot.scraper import GumtreeScraper
-
-
-class UnhandledUrl(Exception):
-    pass
+from flatbot.bot.scraper import get_scraper, UnhandledURL
 
 
 class BadRequest(Exception):
@@ -14,11 +9,14 @@ class BadRequest(Exception):
 
 
 class Channel:
-    def __init__(self, url, scraper, storage, notifier, err_handler, config):
+    def __init__(self, url, db, notifier, err_handler, config):
         self.id = str(uuid.uuid4())
         self.url = url
-        self.scraper = scraper
-        self.storage = storage
+
+        scraper_cls = get_scraper(url)  # may raise
+        self.scraper = scraper_cls(config)
+
+        self.db = db
         self.notifier = notifier
         self.err_handler = err_handler
         self.clients = set()
@@ -33,14 +31,14 @@ class Channel:
         try:
             while True:
                 results = await self.scraper.run(self.url)
-                diff = self.storage.update(self.id, results)
+                diff = self.db.update(self.id, results)
 
                 if diff:
                     await self.notifier.notify(self.id, diff)
                 await asyncio.sleep(self.freq * 3)
         except asyncio.CancelledError:
             pass
-        except:
+        except Exception:
             await self.err_handler.on_error(self.id, self.url)
 
     async def cancel(self):
@@ -63,64 +61,51 @@ class Channel:
         return self.job.cancelled() if self.job else True
 
 
-class Scheduler:
-    scraper_map = {
-        'gumtree': GumtreeScraper,
-    }
-
-    def __init__(self, storage, notifier, config):
-        self.storage = storage
+class Manager:
+    def __init__(self, db, notifier, config):
+        self.db = db
         self.notifier = notifier
         self.config = config
+        self.url2id = {}
         self.channels = {}
-        self.ids = {}
-        self.matcher = re.compile(r'^(https://)?(www\.)?(?P<site>\w*)\.')
 
-    def enqueue(self, uid, url):
-        channel_id = self.ids.get(url, None)
+    async def subscribe(self, uid, url):
+        channel_id = self.url2id.get(url, None)
 
         if not channel_id:
-            cls = self._choose_scraper(url)
-            if cls:
-                scraper = cls(self.config)
-                channel = Channel(url, scraper, self.storage, self.notifier, self, self.config)
+            try:
+                channel = Channel(url, self.db, self.notifier, self, self.config)
                 channel.run()
-                self.channels[channel.id] = channel
-                self.ids[url] = channel.id
-            else:
-                raise UnhandledUrl()
+            except UnhandledURL:
+                raise
+
+            self.channels[channel.id] = channel
+            self.url2id[url] = channel.id
         else:
             channel = self.channels[channel_id]
 
         channel.subscribe(uid)
         return channel.id
 
-    async def remove(self, uid, url):
-        channel_id = self.ids.get(url, None)
+    async def unsubscribe(self, uid, url):
+        channel_id = self.url2id.get(url, None)
         if channel_id:
             channel = self.channels[channel_id]
             channel.unsubscribe(uid)
 
             if not channel.active:
                 await channel.cancel()
-                del self.ids[url]
+                del self.url2id[url]
                 del self.channels[channel_id]
         else:
             raise BadRequest()
 
-    def _choose_scraper(self, url):
-        match = self.matcher.search(url)
-        if match:
-            site = match['site']
-            return self.scraper_map.get(site, None)
-        else:
-            return None
 
     async def cancel_tasks(self):
-        for t in self.channels.values():
-            await t.cancel()
+        for c in self.channels.values():
+            await c.cancel()
 
-        self.ids = {}
+        self.url2id = {}
         self.channels = {}
 
     async def on_error(self, channel_id, url):
@@ -129,5 +114,5 @@ class Scheduler:
         if not channel.cancelled:
             await channel.cancel()
 
-        del self.ids[url]
+        del self.url2id[url]
         del self.channels[channel_id]

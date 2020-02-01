@@ -10,4 +10,4 @@ Also, Android app receiver of notifications is not here yet.
   * Move all config (including paths) to Config class.
   * Turn Scheduler into ChannelManager.
   * Better task separation in Channel?
-
+  * Setup loggers for both API and bot.

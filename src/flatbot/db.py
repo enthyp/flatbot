@@ -1,29 +1,49 @@
-import os
-import sys
-import traceback as tb
-import yaml
-
-from flatbot.config import DATA_PATH
+import aiopg.sa as sa
 
 
-def get_users():
-    # No async because it's only used at the very startup.
-    # TODO: real DB introduction should change this, then both users
-    # and queries will be stored in DB and accessed async when needed,
-    # not kept around in memory all the time.
-    pwd_path = os.path.join(DATA_PATH, 'users.yml')
+async def setup(app, config):
+    db_config = config.db
+    db = await sa.create_engine(database=db_config.name,
+                                user=db_config.user,
+                                password=db_config.password,
+                                host=db_config.host,
+                                port=db_config.port)
+    app['db'] = db
 
-    try:
-        with open(pwd_path, 'r') as pwd_file:
-            users = yaml.safe_load(pwd_file)
-    except Exception: 
-        tb.print_exc()
-        users = None
+    async def close_pg(app):
+        app['db'].close()
+        await app['db'].wait_closed()
+    app.on_cleanup.append(close_pg)
 
-    if not users:
-        sys.exit(-1)
-    else:
-        return users
+    return db
+
+
+# TODO: define tables with SA
+meta = sa.MetaData()
+user = sa.Table('user', meta,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('login', sa.String(100), nullable=False),
+    sa.Column('passwd', sa.String(100), nullable=False),
+)
+
+membership = sa.Table(
+    'membership', meta,
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id')),
+    sa.Column('channel_id', sa.Integer, sa.ForeignKey('channel.id'))
+)
+
+channel = sa.Table('channel', meta,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('url', sa.String(200), nullable=False),
+    sa.relationship('advertisement'),
+    sa.relationship('user', secondary=membership)
+)
+
+advertisement = sa.Table('advertisement', meta,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('content', sa.String(500), nullable=False),
+    sa.Column(sa.Integer, sa.ForeignKey('channel.id'))
+)
 
 
 class Storage:

@@ -1,5 +1,11 @@
 import aiohttp
+import re
 from lxml import etree
+
+
+class UnhandledURL(Exception):
+    pass
+
 
 
 class ScrapeResult:
@@ -94,4 +100,20 @@ class GumtreeScraper(BaseScraper):
         if title and price and date:
             return ScrapeResult(title[0].strip(), price[0].strip())
         else:
-            return None        
+            return None
+
+
+matcher = re.compile(r'^(https://)?(www\.)?(?P<site>\w*)\.')
+scrapers = {
+    'gumtree': GumtreeScraper,
+}
+
+
+def get_scraper(url):
+    match = matcher.search(url)
+
+    try:
+        site = match['site']
+        return scrapers[site]
+    except KeyError:
+        raise UnhandledURL
