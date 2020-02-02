@@ -11,8 +11,3 @@ def config_path():
         return os.path.join(config_dir_path, file)
 
     return _config_path
-
-
-@pytest.fixture
-def database():
-    pass

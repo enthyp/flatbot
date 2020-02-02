@@ -18,8 +18,9 @@ setup(
     ],
     tests_require=[
         'pytest',
-        'pytest-aiohttp',
-        'pytest-mock'
+        'pytest_dependency',
+        'pytest_aiohttp',
+        'pytest_mock'
     ],
     entry_points={
         "console_scripts": [

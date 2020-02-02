@@ -13,6 +13,7 @@ site_query = ('CREATE TABLE IF NOT EXISTS site('
 
 advertisement_query = ('CREATE TABLE IF NOT EXISTS advertisement('
                        'id SERIAL PRIMARY KEY, '
+                       'url VARCHAR (200) UNIQUE NOT NULL, '
                        'content VARCHAR (500) NOT NULL, '
                        'site_id SERIAL NOT NULL REFERENCES site(id) ON DELETE CASCADE);')
 
