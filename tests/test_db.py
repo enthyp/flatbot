@@ -27,6 +27,5 @@ async def test_get_update_site(config_path):
         await storage.update_site('url', site)
         site_stored = await storage.get_site('url')
         assert site_stored == site
-        logging.debug([site_stored, site])
     finally:
-        storage.close()
+        await storage.close()

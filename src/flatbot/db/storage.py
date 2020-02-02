@@ -1,5 +1,5 @@
 import asyncio
-import aiopg
+import aiopg.sa as aiosa
 import sqlalchemy as sa
 
 from flatbot.db.model import Advertisement, Site
@@ -35,24 +35,26 @@ advertisements = sa.Table(
 
 
 class Storage:
-    def __init__(self, pool):
-        self.pool = pool
+    def __init__(self, db):
+        self.db = db
 
     async def close(self):
-        self.pool.close()
-        await self.pool.wait_closed()
+        self.db.close()
+        await self.db.wait_closed()
 
     # TODO: users for auth module!
 
     async def get_site(self, url):
-        with (await self.pool.cursor()) as cur:
+        async with self.db.acquire() as conn:
             query = sites.select().where(sites.c.url == url)
-            site_res = await cur.execute(query)
+            site_res = await conn.execute(query)
             site = await site_res.fetchone()
 
             if not site:
                 return None
-            ads_res = await cur.execute(advertisements.select().where(advertisements.c.site_id == site.id))
+            ads_res = await conn.execute(
+                advertisements.select().where(advertisements.c.site_id == site.id)
+            )
             ads = await ads_res.fetchall()
 
             domain_ads = [Advertisement(a.url, a.content) for a in ads]
@@ -61,32 +63,25 @@ class Storage:
             return domain_site
 
     async def update_site(self, url, site):
-        with (await self.pool.cursor()) as cur:
+        async with self.db.acquire() as conn:
             # Insert if not exists else update.
-            query = sites.select().where(sites.c.url == url)
-            site_res = await cur.execute(query)
-            prev_site = await site_res.fetchone()
-
-            if not prev_site:
-                res = await cur.execute(sites.insert().values(url=url))
-                await asyncio.gather(*[
-                    cur.execute(advertisements.insert().values(
+            site_res = await conn.execute('SELECT * FROM site '
+                                          'WHERE url = %s', (url,))
+            if not site_res:
+                res = await conn.execute(sites.insert().values(url=url))
+                for ad in site.ads:
+                    await conn.execute(advertisements.insert().values(
                         url=ad.url, content=ad.content, site_id=res.inserted_primary_key
                     ))
-                    for ad in site.ads
-                ])
             else:
-                await cur.execute(
+                prev_site = await site_res.fetchone()
+                await conn.execute(
                     advertisements.delete().where(advertisements.c.site_id == prev_site.id)
                 )
-                await asyncio.gather(*[
-                    cur.execute(advertisements.insert().values(
+                for ad in site.ads:
+                    await conn.execute(advertisements.insert().values(
                         url=ad.url, content=ad.content, site_id=prev_site.id
                     ))
-                    for ad in site.ads
-                ])
-
-            cur.commit()
 
     async def add_track(self, site, user):
         pass
@@ -97,7 +92,7 @@ class Storage:
 
 async def get_storage(config):
     db_config = config.db
-    db = await aiopg.create_pool(database=db_config['name'],
+    db = await aiosa.create_engine(database=db_config['name'],
                                  user=db_config['user'],
                                  password=db_config['password'],
                                  host=db_config['host'],
