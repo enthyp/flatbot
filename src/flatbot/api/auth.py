@@ -5,6 +5,7 @@ from aiohttp_security.abc import AbstractAuthorizationPolicy
 # TODO: provide SQL scripts to setup tables and manage users
 # an alternative would be to provide an admin endpoint - maybe some day
 
+
 class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
     def __init__(self, db):
         self.db = db

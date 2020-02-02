@@ -7,7 +7,6 @@ class UnhandledURL(Exception):
     pass
 
 
-
 class ScrapeResult:
     def __init__(self, name, price):
         self.name = name

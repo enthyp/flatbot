@@ -3,8 +3,8 @@ import pytest
 
 from flatbot.config import Config
 from flatbot.db import Storage
-from flatbot.bot import notifications, manager, scraper
-
+from flatbot.tracking import manager, scrapers
+from flatbot import notifications
 
 results_list = [
     [
@@ -13,6 +13,7 @@ results_list = [
     ],
     []
 ]
+
 
 @pytest.mark.parametrize('results', results_list)
 async def test_run_ok(results, config_path, monkeypatch):
@@ -27,7 +28,7 @@ async def test_run_ok(results, config_path, monkeypatch):
         def on_error(self, channel_id, url):
             pass
 
-    base_results = [scraper.ScrapeResult(n, p) for n, p in results]
+    base_results = [scrapers.ScrapeResult(n, p) for n, p in results]
     mock_scraper = MockScraper(base_results)
 
     async def dummy_notify(_, results):

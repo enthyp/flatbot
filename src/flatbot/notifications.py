@@ -2,21 +2,12 @@ import os
 import asyncio
 from datetime import datetime as dt
 
-
 import firebase_admin
 from firebase_admin import messaging
 
+
 class FirebaseException(Exception):
     pass
-
-
-def setup():
-    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-        firebase_admin.initialize_app()
-    else:
-        raise FirebaseException(
-            'One must provide credentials path in GOOGLE_APPLICATION_CREDENTIALS environment variable!'
-        )
 
 
 class Notifier:
@@ -39,3 +30,13 @@ class Notifier:
             "count": str(len(results)),
             "date": dt.strftime(dt.now(), '%Y:%M:%d %H:%M')
         }
+
+
+def setup(app):
+    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+        firebase_admin.initialize_app()
+        app['notifier'] = Notifier()
+    else:
+        raise FirebaseException(
+            'One must provide credentials path in GOOGLE_APPLICATION_CREDENTIALS environment variable!'
+        )

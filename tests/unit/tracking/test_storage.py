@@ -1,5 +1,5 @@
 from flatbot.db import Storage
-from flatbot.bot.scraper import ScrapeResult
+from flatbot.tracking.scrapers import ScrapeResult
 
 
 def test_storage_ok():

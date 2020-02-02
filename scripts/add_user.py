@@ -25,6 +25,7 @@ def add_user(login, password):
     with open(pwd_path, 'w') as pwd_file:
         yaml.safe_dump(users, pwd_file)
 
+
 if __name__ == '__main__':
     assert len(sys.argv) == 3
     add_user(*sys.argv[1:])

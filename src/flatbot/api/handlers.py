@@ -5,7 +5,7 @@ from aiohttp_security import (
 )
 
 from flatbot.api.auth import check_credentials
-from flatbot.bot.manager import UnhandledURL, BadRequest
+from flatbot.tracking.tracker import UnhandledURL, BadRequest
 
 
 async def handle_login(request):
@@ -42,9 +42,9 @@ async def handle_sub(request):
         raise web.HTTPBadRequest()    
 
     print("SUBSCRIBE: " + url)
-    scheduler = request.app['scheduler']
+    service = request.app['tracking']
     try:
-        channel_id = scheduler.subscribe(uid, url)
+        channel_id = service.track(uid, url)
         return web.Response(text=channel_id)
     except UnhandledURL:
         raise web.HTTPBadRequest()
@@ -61,9 +61,9 @@ async def handle_unsub(request):
         raise web.HTTPBadRequest()
 
     print("UNSUBSCRIBE: " + url)
-    scheduler = request.app['scheduler']
+    service = request.app['tracking']
     try:
-        await scheduler.unsubscribe(uid, url)
+        await service.untrack(uid, url)
         raise web.HTTPOk()
     except BadRequest:
         raise web.HTTPBadRequest()
