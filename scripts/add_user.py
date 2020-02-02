@@ -1,32 +1,27 @@
-#!/usr/bin/env python 
-import sys
-import os
+#!/usr/bin/env python
+import argparse
 import bcrypt
-import yaml
 
-root_path = os.path.dirname(os.path.abspath(__file__))
-pwd_path = os.path.join(root_path, '..', 'data', 'pwd.yml')
+from db_connection import get_connection
+
+query = 'INSERT INTO users(login, passwd) VALUES(%s, %s)'
 
 
 def add_user(login, password):
-    try:
-        with open(pwd_path, 'r') as pwd_file:
-            users = yaml.safe_load(pwd_file)
-    except Exception:
-        users = None
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
+            cur.execute(query, (login, hashed))
+            conn.commit()
 
-    if not users:
-        users = {}
 
-    login, password = sys.argv[1], sys.argv[2]
-    hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))
-    users.update({login: hashed.decode()})
-
-    with open(pwd_path, 'w') as pwd_file:
-        yaml.safe_dump(users, pwd_file)
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('login', default='user')
+    parser.add_argument('password', default='password')
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
-    assert len(sys.argv) == 3
-    add_user(*sys.argv[1:])
-
+    args = parse_args()
+    add_user(args.login, args.password)

@@ -1,4 +1,4 @@
-ROOT_PATH := /home/jlanecki/AGH/python/flatbot
+ROOT_PATH := $(shell pwd)
 PACKAGE_PATH := $(ROOT_PATH)/src/flatbot
 
 .PHONY: cert
@@ -21,3 +21,16 @@ clean:
 	@rm -rf \
 		`find $(ROOT_PATH) -name '__pycache__'`	\
 		$(PACKAGE_PATH).egg-info
+
+# Local development #
+
+.PHONY: local-db
+local-db:
+	@docker run --rm \
+	  --name pg \
+	  -e POSTGRES_USER=postgres \
+	  -e POSTGRES_PASSWORD=postgres \
+	  -e POSTGRES_DB=db \
+	  --network host \
+	  -v $(ROOT_PATH)/data:/var/lib/postgresql/data \
+	  postgres

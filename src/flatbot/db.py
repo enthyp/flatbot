@@ -4,22 +4,22 @@ import sqlalchemy as sa
 
 meta = sa.MetaData()
 users = sa.Table(
-    'user', meta,
+    'users', meta,
     sa.Column('id', sa.Integer, primary_key=True),
-    sa.Column('login', sa.String(100), nullable=False),
+    sa.Column('login', sa.String(100), unique=True, nullable=False),
     sa.Column('passwd', sa.String(100), nullable=False),
 )
 
 tracks = sa.Table(
     'tracks', meta,
-    sa.Column('user_id', sa.Integer, sa.ForeignKey('user.id')),
+    sa.Column('user_id', sa.Integer, sa.ForeignKey('users.id')),
     sa.Column('site_id', sa.Integer, sa.ForeignKey('site.id'))
 )
 
 sites = sa.Table(
     'site', meta,
     sa.Column('id', sa.Integer, primary_key=True),
-    sa.Column('url', sa.String(200), nullable=False),
+    sa.Column('url', sa.String(200), unique=True, nullable=False),
 )
 
 advertisements = sa.Table(
