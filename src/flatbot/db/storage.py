@@ -46,15 +46,15 @@ class Storage:
 
     async def get_site(self, url):
         async with self.db.acquire() as conn:
-            query = sites.select().where(sites.c.url == url)
-            site_res = await conn.execute(query)
-            site = await site_res.fetchone()
+            site_query = sites.select().where(sites.c.url == url)
+            site_res = await conn.execute(site_query)
 
-            if not site:
+            if not site_res:
                 return None
-            ads_res = await conn.execute(
-                advertisements.select().where(advertisements.c.site_id == site.id)
-            )
+
+            site = await site_res.fetchone()
+            ads_query = advertisements.select().where(advertisements.c.site_id == site.id)
+            ads_res = await conn.execute(ads_query)
             ads = await ads_res.fetchall()
 
             domain_ads = [Advertisement(a.url, a.content) for a in ads]
@@ -64,9 +64,9 @@ class Storage:
 
     async def update_site(self, url, site):
         async with self.db.acquire() as conn:
-            # Insert if not exists else update.
-            site_res = await conn.execute('SELECT * FROM site '
-                                          'WHERE url = %s', (url,))
+            site_query = sites.select().where(sites.c.url == url)
+            site_res = await conn.execute(site_query)
+
             if not site_res:
                 res = await conn.execute(sites.insert().values(url=url))
                 for ad in site.ads:
@@ -93,10 +93,10 @@ class Storage:
 async def get_storage(config):
     db_config = config.db
     db = await aiosa.create_engine(database=db_config['name'],
-                                 user=db_config['user'],
-                                 password=db_config['password'],
-                                 host=db_config['host'],
-                                 port=db_config['port'])
+                                   user=db_config['user'],
+                                   password=db_config['password'],
+                                   host=db_config['host'],
+                                   port=db_config['port'])
     return Storage(db)
 
 

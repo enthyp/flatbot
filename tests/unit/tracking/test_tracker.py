@@ -2,7 +2,7 @@ import asyncio
 import pytest
 
 from flatbot.config import Config
-from flatbot.db import Storage
+from flatbot.db.storage import Storage
 from flatbot.tracking import manager, scrapers
 from flatbot import notifications
 

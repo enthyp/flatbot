@@ -3,6 +3,7 @@ Google Firebase Cloud Messaging in service of letting you know about new posting
 Also, Android app receiver of notifications is not here yet.
 
 #### TODOs:
+  * Mock tests for Tracker class!
   * Use Postgres instead of YAML files!
     * Requires changes in:
       * authorization policy
