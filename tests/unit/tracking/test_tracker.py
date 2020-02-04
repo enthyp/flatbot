@@ -3,20 +3,34 @@ import pytest
 
 from flatbot.config import Config
 from flatbot.db.storage import Storage
-from flatbot.tracking import manager, scrapers
+from flatbot.tracking.scrapers import BaseScraper
 from flatbot import notifications
 
-results_list = [
-    [
-        ("M1", "200"),
-        ("M2", "300")
-    ],
-    []
-]
 
+@pytest.fixture
+def mock_storage(mocker):
+    storage = mocker.Mock(spec=Storage)
+    return storage
+
+
+@pytest.fixture
+def mock_scraper(mocker):
+    scraper = mocker.Mock(spec=BaseScraper)
+    return scraper
+
+
+def test_add_remove(mock_storage, mock_scraper):
+    pass
+
+
+async def test_run(mock_storage, mock_scraper):
+    pass
+
+
+# TODO: all below goes to waste!
 
 @pytest.mark.parametrize('results', results_list)
-async def test_run_ok(results, config_path, monkeypatch):
+async def test_run_ok(results, config_path, mocker):
     class MockScraper:
         def __init__(self, results):
             self.results = results

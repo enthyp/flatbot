@@ -1,5 +1,6 @@
 import aiopg.sa as aiosa
 import sqlalchemy as sa
+from psycopg2.errors import UniqueViolation
 
 from flatbot.db.model import Advertisement, Site
 
@@ -70,7 +71,7 @@ class Storage:
 
             return domain_site
 
-    async def get_sites(self):
+    async def get_urls(self):
         async with self.db.acquire() as conn:
             site_query = sites.select()
             site_res = await conn.execute(site_query)
@@ -82,7 +83,10 @@ class Storage:
 
     async def create_site(self, url):
         async with self.db.acquire() as conn:
-            await conn.execute(sites.insert().values(url=url))
+            try:
+                await conn.execute(sites.insert().values(url=url))
+            except UniqueViolation:
+                pass
 
     async def update_site(self, url, site):
         async with self.db.acquire() as conn:
@@ -106,6 +110,7 @@ class Storage:
                     ))
 
     async def remove_site(self, url):
+        # TODO: unused for now? just use scripts?
         async with self.db.acquire() as conn:
             await conn.execute(sites.delete().where(sites.c.url == url))
 
