@@ -5,7 +5,7 @@ from aiohttp_security import (
 )
 
 from flatbot.api.auth import check_credentials
-from flatbot.tracking.tracker import UnhandledURL, BadRequest
+from flatbot.tracking.manager import BadRequest, ServerError
 
 
 async def handle_login(request):
@@ -33,7 +33,7 @@ async def handle_logout(request):
 
 async def handle_sub(request):
     await check_authorized(request)
-    uid = await authorized_userid(request)
+    login = await authorized_userid(request)
 
     form = await request.post()
     try:
@@ -42,17 +42,19 @@ async def handle_sub(request):
         raise web.HTTPBadRequest()    
 
     print("SUBSCRIBE: " + url)
-    service = request.app['tracking']
+    manager = request.app['manager']
     try:
-        channel_id = service.track(uid, url)
-        return web.Response(text=channel_id)
-    except UnhandledURL:
+        tracker_id = manager.track(login, url)
+        return web.Response(text=tracker_id)
+    except BadRequest:
         raise web.HTTPBadRequest()
+    except ServerError:
+        raise web.HTTPInternalServerError()
 
 
 async def handle_unsub(request):
     await check_authorized(request)
-    uid = await authorized_userid(request)
+    login = await authorized_userid(request)
 
     form = await request.post()
     try:
@@ -61,9 +63,11 @@ async def handle_unsub(request):
         raise web.HTTPBadRequest()
 
     print("UNSUBSCRIBE: " + url)
-    service = request.app['tracking']
+    manager = request.app['manager']
     try:
-        await service.untrack(uid, url)
+        await manager.untrack(login, url)
         raise web.HTTPOk()
     except BadRequest:
         raise web.HTTPBadRequest()
+    except ServerError:
+        raise web.HTTPInternalServerError()

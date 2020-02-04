@@ -5,18 +5,15 @@ from flatbot.tracking.scrapers import get_scraper
 
 
 class Tracker:
-    def __init__(self, url, storage, manager, scraper, config):
+    def __init__(self, url, scraper, storage, config):
         self.id = str(uuid.uuid4())
         self.url = url
-
-        self.scraper = scraper
-
-        self.storage = storage
-        self.manager = manager
-        self.clients = set()
-
         self.freq = config.scraper['frequency']
         self.job = None
+
+        self.storage = storage
+        self.scraper = scraper
+        self.update_handler = None  # should be set
 
     def run(self):
         self.job = asyncio.create_task(self._run())
@@ -26,8 +23,8 @@ class Tracker:
             while True:
                 updates = self.check_updates()
                 if updates:
-                    self.manager.handle_updates(updates)
-                await asyncio.sleep(self.freq * 60)
+                    self.update_handler.handle(updates)
+                await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
 
@@ -41,20 +38,21 @@ class Tracker:
         else:
             return None
 
+    async def add(self, login):
+        await self.storage.add_track(self.url, login)
+
+    async def remove(self, login):
+        await self.storage.remove_track(self.url, login)
+
     async def cancel(self):
+        # TODO: remove site from DB?
         if not self.cancelled:
             self.job.cancel()
             await self.job
 
-    def subscribe(self, uid):
-        self.clients.add(uid)
-
-    def unsubscribe(self, uid):
-        self.clients.discard(uid)
-
     @property
-    def active(self):
-        return True if self.clients else False
+    async def active(self):
+        return await self.storage.is_tracked(self.url)
 
     @property
     def cancelled(self):
@@ -62,18 +60,18 @@ class Tracker:
 
 
 class TrackerFactory:
-    def __init__(self, db, notifier, config):
+    def __init__(self, storage, config):
         self.config = config
-        self.db = db
+        self.storage = storage
 
     def get(self, url):
         scraper_cls = get_scraper(url)  # may raise
         scraper = scraper_cls(self.config)
 
-        # Get or create a Site.
-        return Tracker(url)
+        await self.storage.create_site(url)  # TODO: may violate Unique constraint
+        return Tracker(url, scraper, self.storage, self.config)
 
     def get_all(self):
-        # TODO: for DB bootstrapping the Manager
-        # get all stored sites, get a Tracker for each
-        return []
+        # For initial DB bootstrap of the server?
+        urls = await self.storage.get_urls()
+        return [self.get(url) for url in urls]  # TODO: could use a single DB operation

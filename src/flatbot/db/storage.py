@@ -1,4 +1,3 @@
-import asyncio
 import aiopg.sa as aiosa
 import sqlalchemy as sa
 
@@ -16,7 +15,8 @@ users = sa.Table(
 tracks = sa.Table(
     'tracks', meta,
     sa.Column('user_id', sa.Integer, sa.ForeignKey('users.id')),
-    sa.Column('site_id', sa.Integer, sa.ForeignKey('site.id'))
+    sa.Column('site_id', sa.Integer, sa.ForeignKey('site.id')),
+    sa.PrimaryKeyConstraint('user_id', 'site_id', name='tracks_pk')
 )
 
 sites = sa.Table(
@@ -32,6 +32,14 @@ advertisements = sa.Table(
     sa.Column('content', sa.String(500), nullable=False),
     sa.Column('site_id', sa.Integer, sa.ForeignKey('site.id'))
 )
+
+
+class DBError(Exception):
+    pass
+
+
+class InvalidOpError(DBError):
+    pass
 
 
 class Storage:
@@ -62,6 +70,20 @@ class Storage:
 
             return domain_site
 
+    async def get_sites(self):
+        async with self.db.acquire() as conn:
+            site_query = sites.select()
+            site_res = await conn.execute(site_query)
+
+            if not site_res:
+                return None
+
+            return [s['url'] for s in await site_res.fetchall()]
+
+    async def create_site(self, url):
+        async with self.db.acquire() as conn:
+            await conn.execute(sites.insert().values(url=url))
+
     async def update_site(self, url, site):
         async with self.db.acquire() as conn:
             site_query = sites.select().where(sites.c.url == url)
@@ -83,11 +105,42 @@ class Storage:
                         url=ad.url, content=ad.content, site_id=prev_site.id
                     ))
 
-    async def add_track(self, site, user):
-        pass
+    async def remove_site(self, url):
+        async with self.db.acquire() as conn:
+            await conn.execute(sites.delete().where(sites.c.url == url))
 
-    async def remove_track(self, site, user):
-        pass
+    async def add_track(self, url, login):
+        async with self.db.acquire() as conn:
+            # TODO: fewer DB requests?
+            site_res = await conn.execute(sites.select().where(sites.c.url == url))
+            if not site_res:
+                raise InvalidOpError()
+
+            user_res = await conn.execute(users.select().where(users.c.login == login))
+            site = await site_res.fetchone()
+            user = await user_res.fetchone()
+            await tracks.insert().values(site_id=site.id, user_id=user.id)
+
+    async def remove_track(self, url, login):
+        async with self.db.acquire() as conn:
+            query = sites.join(tracks).join(users).select(tracks.c.id).where(
+                sa.and_(
+                    users.c.login == login,
+                    sites.c.url == url
+                )
+            )
+            track_res = await conn.execute(query)
+            if not track_res:
+                raise InvalidOpError()
+
+            track = await track_res.fetchone()
+            await conn.execute(tracks.delete().where(tracks.c.id == track[0]))
+
+    async def is_tracked(self, url):
+        async with self.db.acquire() as conn:
+            query = sites.join(tracks).select().where(sites.c.url == url)
+            tracks_res = await conn.execute(query)
+            return bool(tracks_res)
 
 
 async def get_storage(config):
