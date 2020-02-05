@@ -61,4 +61,4 @@ class Manager:
 
     async def handle(self, id, updates):
         # TODO: turn them into a message!
-        self.notifier.notify(id, updates)
+        await self.notifier.notify(id, updates)

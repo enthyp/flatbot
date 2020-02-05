@@ -21,9 +21,9 @@ class Tracker:
     async def _run(self):
         try:
             while True:
-                updates = self.check_updates()
+                updates = await self.check_updates()
                 if updates:
-                    self.update_handler.handle(self.id, updates)
+                    await self.update_handler.handle(self.id, updates)
                 await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
