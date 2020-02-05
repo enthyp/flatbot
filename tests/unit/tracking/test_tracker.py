@@ -2,6 +2,7 @@ import asyncio
 import pytest
 from itertools import chain, repeat
 
+
 from flatbot.db.storage import Storage
 from flatbot.tracking.manager import Manager
 from flatbot.tracking.scrapers import BaseScraper
@@ -97,21 +98,17 @@ async def test_check_updates(config, site, mock_storage, mock_scraper):
 
 @pytest.mark.slow
 async def test_run(config, site, mocker, mock_storage, mock_scraper):
-    #with mocker.patch('flatbot.tracking.tracker.Tracker.check_updates') as mock_check_updates:
-        # mock_check_updates.side_effect = chain(
-        #     [async_return(site)],
-        #     map(lambda x: async_return(x), repeat(None))
-        # )
-    mock_storage.get_site.side_effect = chain(
-        [async_return(None)],
-        map(lambda x: async_return(x), repeat(site))
-    )
-    mock_storage.update_site.side_effect = chain(
-        map(lambda x: async_return(x), repeat(None))
-    )
-    mock_scraper.run.side_effect = map(lambda x: async_return(x), repeat(site))
     config = config('config_full.yml')
     tracker = Tracker('url', mock_scraper, mock_storage, config)
+
+    # Mock updates.
+    updates = chain(
+        [async_return(site)],
+        map(lambda x: async_return(x), repeat(None))
+    )
+
+    mock_check = mocker.patch.object(tracker, 'check_updates')
+    mock_check.side_effect = updates
 
     handler = mocker.Mock()
     handler.handle.return_value = async_return(None)
@@ -121,8 +118,8 @@ async def test_run(config, site, mocker, mock_storage, mock_scraper):
     await asyncio.sleep(2)
     await tracker.cancel()
 
-    mock_scraper.run.assert_called_with('url')
     handler.handle.assert_called_with(tracker.id, site)
+    mock_check.assert_called_with()
 
 # @pytest.mark.parametrize('results', results_list)
 # async def test_run_ok(results, config_path, mocker):
