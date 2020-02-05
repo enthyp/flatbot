@@ -23,19 +23,20 @@ class Tracker:
             while True:
                 updates = self.check_updates()
                 if updates:
-                    self.update_handler.handle(updates)
+                    self.update_handler.handle(self.id, updates)
                 await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
 
     async def check_updates(self):
         current = await self.scraper.run(self.url)
-        prev = self.storage.get_site(self.url)
+        prev = await self.storage.get_site(self.url)
 
         if prev != current:
-            self.storage.update_site(current, self.url)
+            await self.storage.update_site(current, self.url)
             return current
         else:
+            # TODO: handle scraper failure?
             return None
 
     async def add(self, login):
@@ -45,7 +46,8 @@ class Tracker:
         await self.storage.remove_track(self.url, login)
 
     async def cancel(self):
-        # TODO: remove site from DB?
+        # Site stays in the DB - we might want to remove VERY old
+        # entries periodically, but apart from that results stay in the DB.
         if not self.cancelled:
             self.job.cancel()
             await self.job
@@ -64,14 +66,14 @@ class TrackerFactory:
         self.config = config
         self.storage = storage
 
-    def get(self, url):
+    async def get(self, url):
         scraper_cls = get_scraper(url)  # may raise
         scraper = scraper_cls(self.config)
 
-        await self.storage.create_site(url)  # TODO: may violate Unique constraint
+        await self.storage.create_site(url)
         return Tracker(url, scraper, self.storage, self.config)
 
-    def get_all(self):
+    async def get_all(self):
         # For initial DB bootstrap of the server?
         urls = await self.storage.get_urls()
         return [self.get(url) for url in urls]  # TODO: could use a single DB operation

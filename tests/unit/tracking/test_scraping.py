@@ -4,6 +4,8 @@ import pytest
 from flatbot.config import Config
 from flatbot.tracking.scrapers import GumtreeScraper
 
+# TODO: test incorrect URLs etc.
+
 
 @pytest.mark.slow
 async def test_gumtree_scraper(config_path):

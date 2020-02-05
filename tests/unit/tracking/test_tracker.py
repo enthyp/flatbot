@@ -1,10 +1,9 @@
-import asyncio
 import pytest
 
-from flatbot.config import Config
 from flatbot.db.storage import Storage
+from flatbot.tracking.manager import Manager
 from flatbot.tracking.scrapers import BaseScraper
-from flatbot import notifications
+from flatbot.tracking.tracker import Tracker, TrackerFactory
 
 
 @pytest.fixture
@@ -19,61 +18,130 @@ def mock_scraper(mocker):
     return scraper
 
 
-def test_add_remove(mock_storage, mock_scraper):
-    pass
+@pytest.fixture
+def mock_manager(mocker):
+    manager = mocker.Mock(spec=Manager)
+    return manager
+
+
+# Helper for mocking coroutines.
+async def async_return(value):
+    return value
+
+
+async def test_add_remove(config, mock_storage, mock_scraper):
+    config = config('config_full.yml')
+    mock_storage.add_track.return_value = async_return(None)
+    mock_storage.remove_track.return_value = async_return(None)
+
+    tracker = Tracker('url', mock_scraper, mock_storage, config)
+
+    await tracker.add('kuba')
+    mock_storage.add_track.assert_called_once_with('url', 'kuba')
+
+    await tracker.remove('kuba')
+    mock_storage.remove_track.assert_called_once_with('url', 'kuba')
+
+
+async def test_tracker_factory(config, mocker, mock_storage, mock_scraper):
+    with mocker.patch('flatbot.tracking.tracker.get_scraper') as mock_get_scraper:
+        mock_get_scraper.return_value = mock_scraper
+        config = config('config_full.yml')
+        mock_storage.create_site.return_value = async_return(None)
+        mock_storage.get_urls.return_value = async_return([])
+
+        factory = TrackerFactory(mock_storage, config)
+        await factory.get('url')
+        mock_storage.create_site.assert_called_once_with('url')
+
+        await factory.get_all()
+        mock_storage.get_urls.assert_called_once()
+
+
+@pytest.mark.slow
+async def test_add_remove_db(config, storage, mocker):
+    with mocker.patch('flatbot.tracking.tracker.get_scraper') as mock_get_scraper:
+        mock_get_scraper.return_value = mock_scraper
+        config = config('config_full.yml')
+        storage = await storage(config)
+
+        mock_storage = mocker.Mock()
+        mock_storage.create_site.side_effect = storage.create_site
+        mock_storage.add_track.side_effect = storage.add_track
+        mock_storage.remove_track.side_effect = storage.remove_track
+
+        factory = TrackerFactory(mock_storage, config)
+        tracker = await factory.get('url')
+
+        await tracker.add('kuba')
+        mock_storage.add_track.assert_called_once_with('url', 'kuba')
+
+        assert await storage.is_tracked('url')
+
+        await tracker.remove('kuba')
+        mock_storage.remove_track.assert_called_once_with('url', 'kuba')
+
+
+async def test_check_updates(config, site, mock_storage, mock_scraper):
+    config = config('config_full.yml')
+    mock_storage.get_site.side_effect = [async_return(None), async_return(site)]
+    mock_storage.update_site.return_value = async_return(None)
+    mock_scraper.run.side_effect = [async_return(site), async_return(site)]
+
+    tracker = Tracker('url', mock_scraper, mock_storage, config)
+    assert await tracker.check_updates() == site
+    assert not await tracker.check_updates()
 
 
 async def test_run(mock_storage, mock_scraper):
     pass
 
 
-# TODO: all below goes to waste!
-
-@pytest.mark.parametrize('results', results_list)
-async def test_run_ok(results, config_path, mocker):
-    class MockScraper:
-        def __init__(self, results):
-            self.results = results
-
-        async def run(self, _):
-            return self.results
-
-    class MockHandler:
-        def on_error(self, channel_id, url):
-            pass
-
-    base_results = [scrapers.ScrapeResult(n, p) for n, p in results]
-    mock_scraper = MockScraper(base_results)
-
-    async def dummy_notify(_, results):
-        assert results == base_results
-
-    notifier = notifications.Notifier()
-    monkeypatch.setattr(notifier, 'notify', dummy_notify)
-    storage = Storage()
-    config = Config(config_path)
-    channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
-
-    channel.run()
-    await asyncio.sleep(1)
-    await channel.cancel()
-
-
-async def test_run_fail(config_path):
-    class MockScraper:
-        async def run(self, url):
-            raise Exception
-
-    class MockHandler:
-        async def on_error(self, channel_id, url):
-            pass
-
-    config = Config(config_path)
-    mock_scraper = MockScraper()
-    notifier = notifications.Notifier()
-    storage = Storage()
-    channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
-
-    channel.run()
-    await asyncio.sleep(1)
-    await channel.cancel()
+# @pytest.mark.parametrize('results', results_list)
+# async def test_run_ok(results, config_path, mocker):
+#     class MockScraper:
+#         def __init__(self, results):
+#             self.results = results
+#
+#         async def run(self, _):
+#             return self.results
+#
+#     class MockHandler:
+#         def on_error(self, channel_id, url):
+#             pass
+#
+#     base_results = [scrapers.ScrapeResult(n, p) for n, p in results]
+#     mock_scraper = MockScraper(base_results)
+#
+#     async def dummy_notify(_, results):
+#         assert results == base_results
+#
+#     notifier = notifications.Notifier()
+#     monkeypatch.setattr(notifier, 'notify', dummy_notify)
+#     storage = Storage()
+#     config = Config(config_path)
+#     channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
+#
+#     channel.run()
+#     await asyncio.sleep(1)
+#     await channel.cancel()
+#
+#
+# async def test_run_fail(config_path):
+#     class MockScraper:
+#         async def run(self, url):
+#             raise Exception
+#
+#     class MockHandler:
+#         async def on_error(self, channel_id, url):
+#             pass
+#
+#     config = Config(config_path)
+#     mock_scraper = MockScraper()
+#     notifier = notifications.Notifier()
+#     storage = Storage()
+#     channel = manager.URLChannel("", mock_scraper, storage, notifier, MockHandler(), config)
+#
+#     channel.run()
+#     await asyncio.sleep(1)
+#     await channel.cancel()

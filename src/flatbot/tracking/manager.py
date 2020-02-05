@@ -24,13 +24,15 @@ class Manager:
         if not tracker_id:
             try:
                 tracker = self.tracker_factory.get(url)
+                tracker.update_handler = self
                 self.trackers[tracker.id] = tracker
+                self.url2id[url] = tracker.id
             except UnhandledURL:
                 raise
         else:
             tracker = self.trackers[tracker_id]
 
-        tracker.add(uid)
+        await tracker.add(uid)
         return tracker.id
 
     async def untrack(self, login, url):
@@ -40,7 +42,7 @@ class Manager:
 
         tracker = self.trackers[tracker_id]
         try:
-            tracker.remove(login)
+            await tracker.remove(login)
             if not tracker.active:
                 await tracker.cancel()
                 del self.url2id[url]
@@ -57,6 +59,6 @@ class Manager:
         self.url2id = {}
         self.trackers = {}
 
-    async def handle_updates(self, id, updates):
+    async def handle(self, id, updates):
         # TODO: turn them into a message!
         self.notifier.notify(id, updates)

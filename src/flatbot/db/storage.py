@@ -121,14 +121,16 @@ class Storage:
             if not site_res:
                 raise InvalidOpError()
 
-            user_res = await conn.execute(users.select().where(users.c.login == login))
             site = await site_res.fetchone()
+            user_res = await conn.execute(users.select().where(users.c.login == login))
             user = await user_res.fetchone()
-            await tracks.insert().values(site_id=site.id, user_id=user.id)
+
+            insert_query = tracks.insert().values(site_id=site.id, user_id=user.id)
+            await conn.execute(insert_query)
 
     async def remove_track(self, url, login):
         async with self.db.acquire() as conn:
-            query = sites.join(tracks).join(users).select(tracks.c.id).where(
+            query = sites.join(tracks).join(users).select().where(
                 sa.and_(
                     users.c.login == login,
                     sites.c.url == url
@@ -139,7 +141,13 @@ class Storage:
                 raise InvalidOpError()
 
             track = await track_res.fetchone()
-            await conn.execute(tracks.delete().where(tracks.c.id == track[0]))
+            del_query = tracks.delete().where(
+                sa.and_(
+                    tracks.c.site_id == track['site_id'],
+                    tracks.c.user_id == track['user_id']
+                )
+            )
+            await conn.execute(del_query)
 
     async def is_tracked(self, url):
         async with self.db.acquire() as conn:

@@ -2,27 +2,11 @@ import aiohttp
 import re
 from lxml import etree
 
+from flatbot.db.model import Site, Advertisement
+
 
 class UnhandledURL(Exception):
     pass
-
-
-class ScrapeResult:
-    def __init__(self, name, price):
-        self.name = name
-        self.price = price
-        
-    def __str__(self):
-        return 'price: {}'.format(self.price)
-
-    def __members(self):
-        return self.name, self.price
-
-    def __eq__(self, other):
-        return self.__members() == other.__members()
-
-    def __hash__(self):
-        return hash(self.__members())
 
 
 class BaseScraper:
@@ -114,5 +98,5 @@ def get_scraper(url):
     try:
         site = match['site']
         return scrapers[site]
-    except KeyError:
+    except (KeyError, TypeError):
         raise UnhandledURL

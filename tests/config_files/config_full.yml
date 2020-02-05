@@ -8,5 +8,5 @@ db:
  host: '0.0.0.0'
  port: 5432
 scraper:
- frequency: 1
+ frequency: 1  # in seconds!
  item_limit: 3
