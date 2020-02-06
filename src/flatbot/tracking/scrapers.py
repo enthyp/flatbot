@@ -18,31 +18,33 @@ class BaseScraper:
 
     async def run(self, url):
         async with aiohttp.ClientSession() as session:
+            site = Site(url, set())
+            ads = []
             next_page_available = True
-            results = []
 
-            while next_page_available and len(results) < self.item_limit:
+            while next_page_available and len(ads) < self.item_limit:
                 async with (await session.get(url)) as response:
                     html = await response.text()
 
-                    site = self.parse(html)
-                    items = self.get_items(site)
+                    page = self.parse(html)
+                    items = self.get_items(page)
 
                     try:
                         for item in items:
-                            if len(results) >= self.item_limit:
+                            if len(ads) >= self.item_limit:
                                 break
 
-                            item = self.parse_item(item)
-                            if item:
-                                results.append(item)
+                            ad = self.parse_item(item)
+                            if ad:
+                                ads.append(ad)
 
-                        url = self.next_page(site)
+                        url = self.next_page(page)
                         if not url:
                             next_page_available = False
                     except BaseScraper.SpanExceeded:
                         break
-        return results
+        site.ads = ads
+        return site
 
     @staticmethod
     def parse(html):
@@ -57,6 +59,7 @@ class BaseScraper:
         raise NotImplementedError
 
     def parse_item(self, node):
+        """Return an Advertisement."""
         raise NotImplementedError
 
 
@@ -78,10 +81,13 @@ class GumtreeScraper(BaseScraper):
     def parse_item(self, node):
         title = node.xpath('./div[@class="title"]/a/text()')
         price = node.xpath('./div[@class="info"]/span[@class="price-text"]//text()')
-        date = node.xpath('./div[@class="info"]/div[@class="creation-date"]//text()')
+        url = node.xpath('./div[@class="title"]/a')
+        # date = node.xpath('./div[@class="info"]/div[@class="creation-date"]//text()')
 
-        if title and price and date:
-            return ScrapeResult(title[0].strip(), price[0].strip())
+        if title and price and url:
+            content = '{}\n{}'.format(title[0].strip(), price[0].strip())
+            url = url[0].get('href')
+            return Advertisement(url, content)
         else:
             return None
 

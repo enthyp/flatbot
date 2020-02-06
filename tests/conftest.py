@@ -42,7 +42,7 @@ def storage(loop):
 def site():
     ad1 = Advertisement('url/ad1', 'ad1')
     ad2 = Advertisement('url/ad2', 'ad2')
-    site = Site('url', [ad1, ad2])
+    site = Site('url', {ad1, ad2})
     return site
 
 

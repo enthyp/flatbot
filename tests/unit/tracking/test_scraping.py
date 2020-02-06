@@ -19,10 +19,10 @@ async def test_gumtree_scraper(config_path):
     while k > 0:
         new_results = await scraper.run(url)
         if new_results and results:
+            logging.debug(results)
+            logging.debug(new_results)
             assert new_results == results
 
         results = new_results
         k -= 1
         time.sleep(1)
-
-    logging.debug(results)

@@ -82,7 +82,7 @@ class Storage:
             ads_res = await conn.execute(ads_query)
             ads = await ads_res.fetchall()
 
-            domain_ads = [Advertisement(a.url, a.content) for a in ads]
+            domain_ads = {Advertisement(a.url, a.content) for a in ads}
             domain_site = Site(site.url, domain_ads)
 
             return domain_site
