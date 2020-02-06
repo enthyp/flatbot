@@ -16,8 +16,8 @@ async def handle_login(request):
         raise web.HTTPBadRequest()    
 
     print("LOGIN: " + login, pwd)
-    users = request.app['users']
-    if await check_credentials(users, login, pwd):
+    storage = request.app['storage']
+    if await check_credentials(storage, login, pwd):
         response = web.HTTPOk()
         await remember(request, response, login)
         raise response
@@ -31,7 +31,7 @@ async def handle_logout(request):
     raise response
 
 
-async def handle_sub(request):
+async def handle_track(request):
     await check_authorized(request)
     login = await authorized_userid(request)
 
@@ -44,15 +44,15 @@ async def handle_sub(request):
     print("SUBSCRIBE: " + url)
     manager = request.app['manager']
     try:
-        tracker_id = manager.track(login, url)
-        return web.Response(text=tracker_id)
+        tracker_id = await manager.track(login, url)
+        return web.Response(text=str(tracker_id))
     except BadRequest:
         raise web.HTTPBadRequest()
     except ServerError:
         raise web.HTTPInternalServerError()
 
 
-async def handle_unsub(request):
+async def handle_untrack(request):
     await check_authorized(request)
     login = await authorized_userid(request)
 

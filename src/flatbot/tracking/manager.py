@@ -19,11 +19,11 @@ class Manager:
         self.trackers = {}
         # TODO: bootstrap from DB
 
-    async def track(self, uid, url):
+    async def track(self, login, url):
         tracker_id = self.url2id.get(url, None)
         if not tracker_id:
             try:
-                tracker = self.tracker_factory.get(url)
+                tracker = await self.tracker_factory.get(url)
                 tracker.update_handler = self
                 self.trackers[tracker.id] = tracker
                 self.url2id[url] = tracker.id
@@ -32,7 +32,7 @@ class Manager:
         else:
             tracker = self.trackers[tracker_id]
 
-        await tracker.add(uid)
+        await tracker.add(login)
         return tracker.id
 
     async def untrack(self, login, url):

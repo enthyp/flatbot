@@ -15,5 +15,5 @@ def setup(app):
     secret_key = base64.urlsafe_b64decode(fernet_key)
     setup_session(app, EncryptedCookieStorage(secret_key))
 
-    setup_security(app, SessionIdentityPolicy(), DBAuthorizationPolicy(app['db']))
+    setup_security(app, SessionIdentityPolicy(), DBAuthorizationPolicy(app['storage']))
     setup_routes(app)

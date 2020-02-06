@@ -1,17 +1,15 @@
 import bcrypt
+import logging
 from aiohttp_security.abc import AbstractAuthorizationPolicy
-
-# TODO: update both methods
-# TODO: provide SQL scripts to setup tables and manage users
-# an alternative would be to provide an admin endpoint - maybe some day
 
 
 class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
-    def __init__(self, db):
-        self.db = db
+    def __init__(self, storage):
+        self.storage = storage
 
     async def authorized_userid(self, identity):
-        if identity in self.users.keys():
+        registered = await self.storage.registered(identity)
+        if registered:
             return identity
         else:
             return None
@@ -19,13 +17,15 @@ class DBAuthorizationPolicy(AbstractAuthorizationPolicy):
     async def permits(self, identity, permission, context=None):
         if identity is None:
             return False
-        
-        return identity in self.users.keys()
+        registered = await self.storage.registered(identity)  # none are privileged o.O
+        return registered
 
 
-async def check_credentials(users, username, password):
-    if username in users: 
-        if bcrypt.checkpw(password.encode(), users[username].encode()):
+async def check_credentials(storage, username, password):
+    passwd_hash = await storage.get_hash(username)
+
+    if passwd_hash:
+        if bcrypt.checkpw(password.encode(), passwd_hash.encode()):
             return True
 
     return False

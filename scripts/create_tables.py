@@ -4,7 +4,7 @@ from db_connection import get_connection
 
 user_query = ('CREATE TABLE IF NOT EXISTS users('
               'id SERIAL PRIMARY KEY, '
-              'login VARCHAR (100) NOT NULL, '
+              'login VARCHAR (100) UNIQUE NOT NULL, '
               'passwd VARCHAR (500) NOT NULL);')
 
 site_query = ('CREATE TABLE IF NOT EXISTS site('

@@ -3,7 +3,9 @@ import pytest
 
 from flatbot.config import Config
 from flatbot.db.model import Advertisement, Site
-from flatbot.db.storage import get_storage
+from flatbot.db.storage import get_storage, Storage
+from flatbot.tracking.manager import Manager
+from flatbot.tracking.scrapers import BaseScraper
 
 
 root_dir = os.path.dirname(os.path.abspath(__file__))
@@ -49,3 +51,29 @@ def storage():
     async def _storage(config):
         return await get_storage(config)
     return _storage
+
+
+@pytest.fixture
+def mock_storage(mocker):
+    storage = mocker.Mock(spec=Storage)
+    return storage
+
+
+@pytest.fixture
+def mock_scraper(mocker):
+    scraper = mocker.Mock(spec=BaseScraper)
+    return scraper
+
+
+@pytest.fixture
+def mock_manager(mocker):
+    manager = mocker.Mock(spec=Manager)
+    return manager
+
+
+# Helper for mocking coroutines.
+@pytest.fixture
+def async_return():
+    async def _async_return(value):
+        return value
+    return _async_return

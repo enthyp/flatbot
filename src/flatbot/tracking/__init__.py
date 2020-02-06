@@ -7,7 +7,7 @@ async def cancel_all(app):
 
 
 def setup(app, config):
-    factory = TrackerFactory(app['db'], app['notifier'], config)
-    tracking_manager = Manager(factory, config)
+    factory = TrackerFactory(app['storage'], config)
+    tracking_manager = Manager(factory, app['notifier'], config)
     app['manager'] = tracking_manager
     app.on_cleanup.append(cancel_all)

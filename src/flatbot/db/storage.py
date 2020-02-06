@@ -51,7 +51,23 @@ class Storage:
         self.db.close()
         await self.db.wait_closed()
 
-    # TODO: users for auth module!
+    async def registered(self, login):
+        async with self.db.acquire() as conn:
+            s_query = users.count().where(users.c.login == login)
+            user_res = await conn.scalar(s_query)
+            if user_res:
+                return True
+            return False
+
+    async def get_hash(self, login):
+        async with self.db.acquire() as conn:
+            s_query = users.select().where(users.c.login == login)
+            user_res = await conn.execute(s_query)
+            if user_res:
+                user = await user_res.fetchone()
+                if user:
+                    return user['passwd']
+            return None
 
     async def get_site(self, url):
         async with self.db.acquire() as conn:
@@ -166,6 +182,10 @@ async def get_storage(config):
     return Storage(db)
 
 
+async def cleanup_storage(app):
+    await app['storage'].close()
+
+
 async def setup(app, config):
     app['storage'] = await get_storage(config)
-    app.on_cleanup.append(app['storage'].close)
+    app.on_cleanup.append(cleanup_storage)
