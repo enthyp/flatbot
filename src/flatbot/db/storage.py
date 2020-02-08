@@ -189,3 +189,10 @@ async def cleanup_storage(app):
 async def setup(app, config):
     app['storage'] = await get_storage(config)
     app.on_cleanup.append(cleanup_storage)
+
+
+def setup_db(app, config):
+    async def _setup(app):
+        app['storage'] = await get_storage(config)
+        app.on_cleanup.append(cleanup_storage)
+    app.on_startup.append(_setup)

@@ -17,3 +17,15 @@ def setup(app):
 
     setup_security(app, SessionIdentityPolicy(), DBAuthorizationPolicy(app['storage']))
     setup_routes(app)
+
+
+def setup_api(app):
+    async def _setup(app):
+        # Setup session storage.
+        fernet_key = fernet.Fernet.generate_key()
+        secret_key = base64.urlsafe_b64decode(fernet_key)
+        setup_session(app, EncryptedCookieStorage(secret_key))
+
+        setup_security(app, SessionIdentityPolicy(), DBAuthorizationPolicy(app['storage']))
+        setup_routes(app)
+    app.on_startup.append(_setup)

@@ -11,3 +11,12 @@ def setup(app, config):
     tracking_manager = Manager(factory, app['notifier'], config)
     app['manager'] = tracking_manager
     app.on_cleanup.append(cancel_all)
+
+
+def setup_bot(app, config):
+    async def _setup(app):
+        factory = TrackerFactory(app['storage'], config)
+        tracking_manager = Manager(factory, app['notifier'], config)
+        app['manager'] = tracking_manager
+    app.on_startup.append(_setup)
+    app.on_cleanup.append(cancel_all)

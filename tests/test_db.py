@@ -3,7 +3,7 @@ import pytest
 from aiohttp import web
 
 from flatbot.db.storage import setup as setup_db
-from flatbot.db.model import Advertisement, Site
+from flatbot.db.model import Advertisement
 
 # TODO: test should clean up after themselves?
 # TODO: need to figure out some way of setting up test DB automatically...

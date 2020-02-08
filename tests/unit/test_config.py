@@ -40,7 +40,7 @@ full_target = MockConfig(
         'name': 'db',
         'user': 'root',
         'password': 'root',
-        'host': '192.168.100.106',
+        'host': '0.0.0.0',
         'port': 5432
     },
     ssl_path='./ssl'
