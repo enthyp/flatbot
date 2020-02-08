@@ -2,6 +2,7 @@ import asyncio
 import pytest
 from itertools import chain, repeat
 
+from flatbot.db.model import Advertisement, Site
 from flatbot.tracking.tracker import Tracker, TrackerFactory
 
 
@@ -40,34 +41,47 @@ async def test_add_remove_db(config, mock_scraper, storage, mocker):
     with mocker.patch('flatbot.tracking.tracker.get_scraper') as mock_get_scraper:
         mock_get_scraper.return_value = mock_scraper
         config = config('config_full.yml')
-        storage = await storage(config)
+        async for storage in storage('config_full.yml'):
+            mock_storage = mocker.Mock()
+            mock_storage.create_site.side_effect = storage.create_site
+            mock_storage.add_track.side_effect = storage.add_track
+            mock_storage.remove_track.side_effect = storage.remove_track
 
-        mock_storage = mocker.Mock()
-        mock_storage.create_site.side_effect = storage.create_site
-        mock_storage.add_track.side_effect = storage.add_track
-        mock_storage.remove_track.side_effect = storage.remove_track
+            factory = TrackerFactory(mock_storage, config)
+            tracker = await factory.get('url')
 
-        factory = TrackerFactory(mock_storage, config)
-        tracker = await factory.get('url')
+            await tracker.add('kuba')
+            mock_storage.add_track.assert_called_once_with('url', 'kuba')
 
-        await tracker.add('kuba')
-        mock_storage.add_track.assert_called_once_with('url', 'kuba')
+            assert await storage.is_tracked('url')
 
-        assert await storage.is_tracked('url')
-
-        await tracker.remove('kuba')
-        mock_storage.remove_track.assert_called_once_with('url', 'kuba')
+            await tracker.remove('kuba')
+            mock_storage.remove_track.assert_called_once_with('url', 'kuba')
 
 
 async def test_check_updates(config, site, async_return, mock_storage, mock_scraper):
     config = config('config_full.yml')
-    mock_storage.get_site.side_effect = [async_return(None), async_return(site)]
-    mock_storage.update_site.return_value = async_return(None)
-    mock_scraper.run.side_effect = [async_return(site), async_return(site)]
+    url = 'url'
+    empty_site = Site(url, set())
+    enhanced_site = Site(url, site.ads.copy())
+    enhanced_site.ads.add(Advertisement(url + '/url', 'stuff'))
+    mock_storage.get_site.side_effect = [
+        async_return(empty_site), async_return(site), async_return(site)
+    ]
+    mock_storage.update_site.side_effect = [
+        async_return(None),
+        async_return(None)
+    ]
+    mock_scraper.run.side_effect = [
+        async_return(site), async_return(site), async_return(enhanced_site)
+    ]
 
-    tracker = Tracker('url', mock_scraper, mock_storage, config)
+    tracker = Tracker(url, mock_scraper, mock_storage, config)
     assert await tracker.check_updates() == site
+    mock_storage.update_site.assert_called_once()
     assert not await tracker.check_updates()
+    assert await tracker.check_updates() == enhanced_site
+    assert mock_storage.update_site.call_count == 2
 
 
 @pytest.mark.slow

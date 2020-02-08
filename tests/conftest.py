@@ -30,9 +30,9 @@ def config(config_path):
 
 
 @pytest.fixture
-def storage(loop):
-    async def _storage(config):
-        storage = await get_storage(config)
+def storage(loop, config):
+    async def _storage(config_file):
+        storage = await get_storage(config(config_file))
         yield storage
         await storage.close()
     return _storage
@@ -44,13 +44,6 @@ def site():
     ad2 = Advertisement('url/ad2', 'ad2')
     site = Site('url', {ad1, ad2})
     return site
-
-
-@pytest.fixture
-def storage():
-    async def _storage(config):
-        return await get_storage(config)
-    return _storage
 
 
 @pytest.fixture

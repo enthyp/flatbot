@@ -1,6 +1,8 @@
 import asyncio
+import logging
 import uuid
 
+from flatbot.db.model import Site
 from flatbot.tracking.scrapers import get_scraper
 
 
@@ -32,9 +34,11 @@ class Tracker:
         current = await self.scraper.run(self.url)
         prev = await self.storage.get_site(self.url)
 
-        if prev != current:
-            await self.storage.update_site(current, self.url)
-            return current
+        if current:
+            if not current.ads.issubset(prev.ads):
+                prev.ads.update(current.ads)
+                await self.storage.update_site(prev, self.url)
+                return current
         else:
             # TODO: handle scraper failure?
             return None

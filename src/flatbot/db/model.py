@@ -20,10 +20,16 @@ class Advertisement:
         self.url = url
         self.content = content
 
+    def __key(self):
+        return self.url, self.content
+
+    def __hash__(self):
+        return hash(self.__key())
+
     def __eq__(self, other):
         if isinstance(other, Advertisement):
-            return self.url == other.url and self.content == other.content
-        return False
+            return self.__key() == other.__key()
+        return NotImplemented
 
     def __str__(self):
         return '{}: {}'.format(self.url, self.content)

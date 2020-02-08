@@ -14,15 +14,9 @@ async def test_gumtree_scraper(config_path):
     scraper = GumtreeScraper(config)
 
     k = 5
-    results = await scraper.run(url)
 
-    while k > 0:
+    for _ in range(k):
         new_results = await scraper.run(url)
-        if new_results and results:
-            logging.debug(results)
+        if new_results:
             logging.debug(new_results)
-            assert new_results == results
-
-        results = new_results
-        k -= 1
         time.sleep(1)

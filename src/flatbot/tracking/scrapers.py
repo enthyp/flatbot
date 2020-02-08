@@ -87,6 +87,7 @@ class GumtreeScraper(BaseScraper):
         if title and price and url:
             content = '{}\n{}'.format(title[0].strip(), price[0].strip())
             url = url[0].get('href')
+            url = 'https://www.gumtree.pl' + url
             return Advertisement(url, content)
         else:
             return None
