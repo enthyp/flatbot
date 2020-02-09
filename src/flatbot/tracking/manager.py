@@ -1,3 +1,5 @@
+from datetime import datetime as dt
+
 from flatbot.db.storage import DBError, InvalidOpError
 from flatbot.tracking.scrapers import UnhandledURL
 
@@ -17,7 +19,15 @@ class Manager:
         self.notifier = notifier
         self.url2id = {}
         self.trackers = {}
-        # TODO: bootstrap from DB
+
+    async def bootstrap(self):
+        trackers = await self.tracker_factory.get_all()
+        for t in trackers:
+            self.url2id[t.url] = t.id
+            self.trackers[t.id] = t
+
+            t.update_handler = self
+            t.run()
 
     async def track(self, login, url):
         tracker_id = self.url2id.get(url, None)
@@ -27,6 +37,9 @@ class Manager:
                 tracker.update_handler = self
                 self.trackers[tracker.id] = tracker
                 self.url2id[url] = tracker.id
+
+                tracker.update_handler = self
+                tracker.run()
             except UnhandledURL:
                 raise
         else:
@@ -59,6 +72,11 @@ class Manager:
         self.url2id = {}
         self.trackers = {}
 
-    async def handle(self, id, updates):
-        # TODO: turn them into a message!
-        await self.notifier.notify(id, updates)
+    async def handle(self, id, site):
+        ads = {ad.url: ad.content for ad in site.ads}
+        payload = {
+            "site": site.url,
+            "date": dt.strftime(dt.now(), '%Y:%M:%d %H:%M')
+        }
+        payload.update(ads)
+        await self.notifier.notify(id, payload)

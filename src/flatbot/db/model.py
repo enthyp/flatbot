@@ -3,6 +3,12 @@ class Site:
         self.url = url
         self.ads = ads
 
+    def __bool__(self):
+        return bool(self.url)
+
+    def __len__(self):
+        return len(self.ads)
+
     def __eq__(self, other):
         if isinstance(other, Site):
             url_eq = self.url == other.url

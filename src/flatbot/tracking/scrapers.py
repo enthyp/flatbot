@@ -19,7 +19,7 @@ class BaseScraper:
     async def run(self, url):
         async with aiohttp.ClientSession() as session:
             site = Site(url, set())
-            ads = []
+            ads = set()
             next_page_available = True
 
             while next_page_available and len(ads) < self.item_limit:
@@ -36,7 +36,7 @@ class BaseScraper:
 
                             ad = self.parse_item(item)
                             if ad:
-                                ads.append(ad)
+                                ads.add(ad)
 
                         url = self.next_page(page)
                         if not url:

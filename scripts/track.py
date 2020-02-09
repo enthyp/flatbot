@@ -3,11 +3,12 @@ import requests
 
 def main():
     session = requests.Session()
-    session.post('http://0.0.0.0:8443/login',
-                 data={'login': 'kuba', 'password': 'haslo'})
+    session.post('https://192.168.100.106:8443/login',
+                 data={'login': 'kuba', 'password': 'haslo'},
+                 verify=False)
     url = 'https://www.gumtree.pl/s-pokoje-do-wynajecia/krakow/agh+pokoj+do+wynajecia+krakow/v1c9000l3200208q0p1'
 
-    session.post('http://0.0.0.0:8443/untrack',
+    session.post('https://192.168.100.106:8443/track',
                  data={'base_url': url})
 
 

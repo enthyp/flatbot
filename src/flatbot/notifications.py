@@ -12,8 +12,7 @@ class FirebaseException(Exception):
 
 
 class Notifier:
-    async def notify(self, channel_id, updates):
-        payload = self.wrap(updates)
+    async def notify(self, channel_id, payload):
         message = messaging.Message(
             data=payload,
             topic=channel_id
@@ -24,13 +23,6 @@ class Notifier:
            None, lambda: messaging.send(message)
         )
         logging.info('Notified!')
-
-    @staticmethod
-    def wrap(results):
-        return {
-            "count": str(len(results)),
-            "date": dt.strftime(dt.now(), '%Y:%M:%d %H:%M')
-        }
 
 
 def setup_notifications(app):

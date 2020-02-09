@@ -9,7 +9,7 @@ cert:
 		-out $(ROOT_PATH)/ssl/cert.pem \
 		-days 90 \
 		-nodes \
-		-subj '/CN=0.0.0.0' \
+		-subj '/CN=192.168.100.106' \
 		-reqexts v3_ca \
 		-config $(ROOT_PATH)/ssl/openssl.cnf
 	@openssl dhparam \
@@ -32,5 +32,18 @@ local-db:
 	  -e POSTGRES_PASSWORD=postgres \
 	  -e POSTGRES_DB=db \
 	  --network host \
-	  -v $(ROOT_PATH)/data:/var/lib/postgresql/data \
+	  -v $(ROOT_PATH)/data/pgdata:/var/lib/postgresql/data \
 	  postgres
+
+# Docker #
+
+.PHONY: docker-build
+docker-build:
+	docker build -t flatbot:latest .
+
+.PHONY: docker-run
+docker-run:
+	docker run --rm \
+		--name fb \
+		--network host \
+		flatbot:latest

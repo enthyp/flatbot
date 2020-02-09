@@ -1,5 +1,5 @@
-import argparse
 from aiohttp import web
+import os
 
 from flatbot.api import setup_api
 from flatbot.api.ssl import ssl_context
@@ -9,7 +9,8 @@ from flatbot.db.storage import setup_db
 from flatbot.notifications import setup_notifications
 
 
-def main(config_path):
+def main():
+    config_path = os.getenv('CONFIG_PATH')
     conf = Config(config_path) if config_path else Config()
     app = web.Application()
 
@@ -19,16 +20,11 @@ def main(config_path):
     setup_bot(app, conf)
 
     context = ssl_context(conf)
-    web.run_app(app, host=conf.host, port=conf.port) # , ssl_context=context)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--config',
-                        help='optional path to config_full.yml file (default: ../../config_full.yml)')
-    return parser.parse_args()
+    if context:
+        web.run_app(app, host=conf.host, port=conf.port, ssl_context=context)
+    else:
+        web.run_app(app, host=conf.host, port=conf.port)
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    main(args.config)
+    main()

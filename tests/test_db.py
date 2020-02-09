@@ -46,4 +46,4 @@ async def test_remove_site(storage):
     async for storage in storage('config_full.yml'):
         await storage.create_site('url')
         await storage.remove_site('url')
-        logging.info(await storage.get_urls())
+        logging.info(await storage.get_active_urls())

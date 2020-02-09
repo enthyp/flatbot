@@ -17,6 +17,7 @@ def setup_bot(app, config):
     async def _setup(app):
         factory = TrackerFactory(app['storage'], config)
         tracking_manager = Manager(factory, app['notifier'], config)
+        await tracking_manager.bootstrap()
         app['manager'] = tracking_manager
     app.on_startup.append(_setup)
     app.on_cleanup.append(cancel_all)

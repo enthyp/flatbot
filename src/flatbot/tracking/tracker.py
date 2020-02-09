@@ -2,7 +2,6 @@ import asyncio
 import logging
 import uuid
 
-from flatbot.db.model import Site
 from flatbot.tracking.scrapers import get_scraper
 
 
@@ -25,7 +24,10 @@ class Tracker:
             while True:
                 updates = await self.check_updates()
                 if updates:
+                    logging.info('Tracker {}: got some updates!'.format(self.id))
                     await self.update_handler.handle(self.id, updates)
+                else:
+                    logging.info('Tracker {}: no updates...'.format(self.id))
                 await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
@@ -34,11 +36,10 @@ class Tracker:
         current = await self.scraper.run(self.url)
         prev = await self.storage.get_site(self.url)
 
-        if current:
-            if not current.ads.issubset(prev.ads):
-                prev.ads.update(current.ads)
-                await self.storage.update_site(prev, self.url)
-                return current
+        if current and not current.ads.issubset(prev.ads):
+            prev.ads.update(current.ads)
+            await self.storage.update_site(self.url, prev)
+            return current
         else:
             # TODO: handle scraper failure?
             return None
@@ -79,5 +80,5 @@ class TrackerFactory:
 
     async def get_all(self):
         # For initial DB bootstrap of the server?
-        urls = await self.storage.get_urls()
-        return [self.get(url) for url in urls]  # TODO: could use a single DB operation
+        urls = await self.storage.get_active_urls()
+        return await asyncio.gather(*[self.get(url) for url in urls])  # TODO: could use a single DB operation

@@ -87,15 +87,15 @@ class Storage:
 
             return domain_site
 
-    async def get_urls(self):
+    async def get_active_urls(self):
         async with self.db.acquire() as conn:
-            site_query = sites.select()
+            site_query = sa.select([sites.c.url]).select_from(sites.join(tracks))
             site_res = await conn.execute(site_query)
 
             if not site_res:
                 return None
 
-            return [s['url'] for s in await site_res.fetchall()]
+            return [s[0] for s in await site_res.fetchall()]
 
     async def create_site(self, url):
         async with self.db.acquire() as conn:

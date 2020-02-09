@@ -25,14 +25,14 @@ async def test_tracker_factory(config, async_return, mocker, mock_storage, mock_
         mock_get_scraper.return_value = mock_scraper
         config = config('config_full.yml')
         mock_storage.create_site.return_value = async_return(None)
-        mock_storage.get_urls.return_value = async_return([])
+        mock_storage.get_active_urls.return_value = async_return([])
 
         factory = TrackerFactory(mock_storage, config)
         await factory.get('url')
         mock_storage.create_site.assert_called_once_with('url')
 
         await factory.get_all()
-        mock_storage.get_urls.assert_called_once()
+        mock_storage.get_active_urls.assert_called_once()
 
 
 # TODO: well, it's already an integration test!!!
