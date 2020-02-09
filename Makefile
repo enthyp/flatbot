@@ -9,7 +9,7 @@ cert:
 		-out $(ROOT_PATH)/ssl/cert.pem \
 		-days 90 \
 		-nodes \
-		-subj '/CN=192.168.100.106' \
+		-subj '/CN=0.0.0.0' \
 		-reqexts v3_ca \
 		-config $(ROOT_PATH)/ssl/openssl.cnf
 	@openssl dhparam \

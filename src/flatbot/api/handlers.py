@@ -1,3 +1,4 @@
+import logging
 from aiohttp import web
 from aiohttp_security import (
     remember, forget, check_authorized,
@@ -15,7 +16,7 @@ async def handle_login(request):
     except KeyError:
         raise web.HTTPBadRequest()    
 
-    print("LOGIN: " + login, pwd)
+    logging.info("LOGIN: {} {}".format(login, pwd))
     storage = request.app['storage']
     if await check_credentials(storage, login, pwd):
         response = web.HTTPOk()
@@ -26,6 +27,7 @@ async def handle_login(request):
 
 
 async def handle_logout(request):
+    logging.info("LOGOUT")
     response = web.HTTPOk()
     await forget(request, response) 
     raise response
@@ -41,7 +43,7 @@ async def handle_track(request):
     except KeyError:
         raise web.HTTPBadRequest()    
 
-    print("SUBSCRIBE: " + url)
+    logging.info("SUBSCRIBE: " + url)
     manager = request.app['manager']
     try:
         tracker_id = await manager.track(login, url)
@@ -62,7 +64,7 @@ async def handle_untrack(request):
     except KeyError:
         raise web.HTTPBadRequest()
 
-    print("UNSUBSCRIBE: " + url)
+    logging.info("UNSUBSCRIBE: " + url)
     manager = request.app['manager']
     try:
         await manager.untrack(login, url)

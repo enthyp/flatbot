@@ -1,5 +1,6 @@
-import os
 import asyncio
+import logging
+import os
 from datetime import datetime as dt
 
 import firebase_admin
@@ -22,7 +23,7 @@ class Notifier:
         await loop.run_in_executor(
            None, lambda: messaging.send(message)
         )
-        print('Notified!')
+        logging.info('Notified!')
 
     @staticmethod
     def wrap(results):
@@ -32,7 +33,7 @@ class Notifier:
         }
 
 
-def setup(app):
+def setup_notifications(app):
     if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
         firebase_admin.initialize_app()
         app['notifier'] = Notifier()
