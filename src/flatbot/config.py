@@ -3,13 +3,9 @@ import yaml
 import warnings
 
 
-ROOT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..')
-DEFAULT_CONFIG_PATH = os.path.join(ROOT_PATH, 'config_full.yml')
-DEFAULT_SSL_PATH = os.path.join(ROOT_PATH, 'ssl')
-
-
 class Config:
-    def __init__(self, path=DEFAULT_CONFIG_PATH):
+    def __init__(self):
+        path = os.getenv('CONFIG_PATH')
         conf_dict = self._get_conf(path)
         self.host = conf_dict.get('host', '0.0.0.0')
         self.port = conf_dict.get('port', 84443)
@@ -17,7 +13,7 @@ class Config:
         self.db = self._get_db(conf_dict)
         self.scraper = self._get_scraper(conf_dict)
 
-        self.ssl_path = conf_dict.get('ssl_path', DEFAULT_SSL_PATH)
+        self.ssl_path = conf_dict.get('ssl_path', None)
 
     @staticmethod
     def _get_conf(config_path):
@@ -36,8 +32,8 @@ class Config:
     def _get_db(config):
         default_db = {
             'name': 'db',
-            'user': 'root',
-            'password': 'root',
+            'user': 'postgres',
+            'password': 'postgres',
             'host': '0.0.0.0',
             'port': 5432
         }

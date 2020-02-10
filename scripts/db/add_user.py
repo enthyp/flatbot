@@ -2,7 +2,7 @@
 import argparse
 import bcrypt
 
-from db_connection import get_connection
+from conn import get_connection
 
 i_query = 'INSERT INTO users(login, passwd) VALUES(%s, %s)'
 

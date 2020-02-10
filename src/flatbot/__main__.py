@@ -1,5 +1,4 @@
 from aiohttp import web
-import os
 
 from flatbot.api import setup_api
 from flatbot.api.ssl import ssl_context
@@ -10,8 +9,7 @@ from flatbot.notifications import setup_notifications
 
 
 def main():
-    config_path = os.getenv('CONFIG_PATH')
-    conf = Config(config_path) if config_path else Config()
+    conf = Config()
     app = web.Application()
 
     setup_db(app, conf)

@@ -4,9 +4,8 @@ import ssl
 
 def ssl_context(config):
     # Set up SSL for HTTPS.
-    try:
-        ssl_path = config.ssl_path
-    except AttributeError:
+    ssl_path = config.ssl_path
+    if not ssl_path:
         return None
 
     cert_path, key_path, dh_path = map(

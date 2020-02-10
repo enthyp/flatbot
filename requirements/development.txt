@@ -1,4 +1,5 @@
--e ..
+-e .
+psycopg2
 pytest
 pytest-dependency
 pytest-aiohttp

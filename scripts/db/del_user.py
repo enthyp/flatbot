@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import argparse
 
-from db_connection import get_connection
+from .conn import get_connection
 
 d_query = 'DELETE FROM users WHERE login = %s'
 

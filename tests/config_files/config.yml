@@ -2,8 +2,8 @@ host: '0.0.0.0'
 port: 8443
 db:
  name: 'db'
- user: 'root'
- password: 'root'
+ user: 'postgres'
+ password: 'postgres'
  host: '0.0.0.0'
  port: 5432
 scraper:

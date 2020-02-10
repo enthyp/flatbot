@@ -1,5 +1,7 @@
 ROOT_PATH := $(shell pwd)
 PACKAGE_PATH := $(ROOT_PATH)/src/flatbot
+# export CONFIG_PATH="$(pwd)/config.yml" <- needed in docker-compose.yml
+# export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/cred.json" <- needed in docker-compose.yml
 
 .PHONY: cert
 cert:
@@ -9,41 +11,44 @@ cert:
 		-out $(ROOT_PATH)/ssl/cert.pem \
 		-days 90 \
 		-nodes \
-		-subj '/CN=192.168.100.106' \
+		-subj /CN=$(HOST_IP) \
 		-reqexts v3_ca \
 		-config $(ROOT_PATH)/ssl/openssl.cnf
 	@openssl dhparam \
 		-out $(ROOT_PATH)/ssl/dhparam.pem \
 		2048	
 
+# Local development #
+
+.PHONY: test-db
+test-db:
+	@ROOT_PATH=$(ROOT_PATH) bash scripts/db/run_test_db.sh
+	@sleep 2
+	@(export CONFIG_PATH=$(TEST_CONFIG_PATH); \
+		python scripts/db/setup_db.py && \
+		python scripts/db/add_user.py user password)
+
 .PHONY: clean
-clean: 
+clean:
 	@rm -rf \
 		`find $(ROOT_PATH) -name '__pycache__'`	\
 		$(PACKAGE_PATH).egg-info
+	@docker stop pg-test
 
-# Local development #
-
-.PHONY: local-db
-local-db:
-	@docker run --rm \
-	  --name pg \
-	  -e POSTGRES_USER=postgres \
-	  -e POSTGRES_PASSWORD=postgres \
-	  -e POSTGRES_DB=db \
-	  --network host \
-	  -v $(ROOT_PATH)/data/pgdata:/var/lib/postgresql/data \
-	  postgres
 
 # Docker #
 
 .PHONY: docker-build
 docker-build:
-	docker build -t flatbot:latest .
+	@docker build -t flatbot:latest .
 
 .PHONY: docker-run
 docker-run:
-	docker run --rm \
+	@docker run --rm \
 		--name fb \
 		--network host \
 		flatbot:latest
+
+.PHONY: dc-build
+dc-build:
+	docker-compose up .

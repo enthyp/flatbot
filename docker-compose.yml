@@ -2,7 +2,18 @@ version: '3'
 services:
   server:
     build: .
+    command: bash /flatbot/scripts/run_server.sh
     ports:
-      - "5000:5000"
+      - "8443:8443"
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS cred.json
+    depends_on:
+      - postgres
   postgres:
     image: "postgres:latest"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db
+    volumes:
+    - data/pgdata:/var/lib/postgresql/data/

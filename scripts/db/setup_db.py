@@ -1,6 +1,12 @@
 #!/usr/bin/env python
-from db_connection import get_connection
+from conn import get_connection
 
+
+drop_all_query = (
+    'DROP TABLE IF EXISTS tracks;'
+    'DROP TABLE IF EXISTS users;'
+    'DROP TABLE IF EXISTS advertisement;'
+    'DROP TABLE IF EXISTS site;')
 
 user_query = ('CREATE TABLE IF NOT EXISTS users('
               'id SERIAL PRIMARY KEY, '
@@ -26,10 +32,12 @@ tracks_query = ('CREATE TABLE IF NOT EXISTS tracks('
 def main():
     with get_connection() as conn:
         with conn.cursor() as cur:
+            cur.execute(drop_all_query)
             cur.execute(user_query)
             cur.execute(site_query)
             cur.execute(advertisement_query)
             cur.execute(tracks_query)
+
             conn.commit()
 
 
