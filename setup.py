@@ -7,7 +7,6 @@ setup(
     python_requires='>=3.7.6',
     install_requires=[
         'lxml',
-        'pyyaml',
         'firebase_admin',
         'bcrypt',
         'cryptography',

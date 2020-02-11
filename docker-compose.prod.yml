@@ -4,7 +4,7 @@ services:
     build: .
     command: bash /flatbot/scripts/run_server.sh
     ports:
-      - "127.0.0.1:8443:8443"
+      - "8443:8443"
     volumes:
     - ./src/flatbot/:/flatbot/src/flatbot
     env_file: .env
@@ -13,7 +13,6 @@ services:
       PORT: 8443
       SSL_PATH: /flatbot/ssl/
       GOOGLE_APPLICATION_CREDENTIALS: /flatbot/cred.json
-      SCRAPER_FREQ: 5
     depends_on:
       - postgres
   postgres:

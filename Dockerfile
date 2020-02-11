@@ -11,10 +11,5 @@ RUN pip install -r requirements.txt
 
 COPY scripts scripts
 COPY ssl ssl
-COPY config.yml config.yml
+COPY .env config.yml
 COPY cred.json cred.json
-
-ENV CONFIG_PATH /flatbot/config.yml
-ENV GOOGLE_APPLICATION_CREDENTIALS /flatbot/cred.json
-
-CMD ["bash", "/flatbot/scripts/run_server.sh"]

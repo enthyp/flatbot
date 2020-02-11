@@ -1,3 +1,4 @@
+import logging
 from aiohttp import web
 
 from flatbot.api import setup_api
@@ -13,15 +14,16 @@ def main():
     app = web.Application()
 
     setup_db(app, conf)
-    setup_notifications(app)
+    setup_notifications(app, conf)
     setup_api(app)
     setup_bot(app, conf)
 
     context = ssl_context(conf)
+    logging.basicConfig(level=logging.DEBUG)
     if context:
-        web.run_app(app, host=conf.host, port=conf.port, ssl_context=context)
+        web.run_app(app, port=conf.port, ssl_context=context)
     else:
-        web.run_app(app, host=conf.host, port=conf.port)
+        web.run_app(app, port=conf.port)
 
 
 if __name__ == '__main__':

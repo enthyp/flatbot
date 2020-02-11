@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import os
-from datetime import datetime as dt
 
 import firebase_admin
 from firebase_admin import messaging
@@ -12,7 +10,8 @@ class FirebaseException(Exception):
 
 
 class Notifier:
-    async def notify(self, channel_id, payload):
+    @staticmethod
+    async def notify(channel_id, payload):
         message = messaging.Message(
             data=payload,
             topic=channel_id
@@ -25,8 +24,8 @@ class Notifier:
         logging.info('Notified!')
 
 
-def setup_notifications(app):
-    if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+def setup_notifications(app, config):
+    if config.google_cred_path:
         firebase_admin.initialize_app()
         app['notifier'] = Notifier()
     else:

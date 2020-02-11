@@ -34,6 +34,28 @@ advertisements = sa.Table(
     sa.Column('site_id', sa.Integer, sa.ForeignKey('site.id'))
 )
 
+# I can't seem to find a clean SA way to CREATE IF NOT EXISTS (!) async.
+# Hello SQL, my old friend.
+user_query = ('CREATE TABLE IF NOT EXISTS users('
+              'id SERIAL PRIMARY KEY, '
+              'login VARCHAR (100) UNIQUE NOT NULL, '
+              'passwd VARCHAR (500) NOT NULL);')
+
+site_query = ('CREATE TABLE IF NOT EXISTS site('
+              'id SERIAL PRIMARY KEY, '
+              'url VARCHAR (200) UNIQUE NOT NULL);')
+
+advertisement_query = ('CREATE TABLE IF NOT EXISTS advertisement('
+                       'id SERIAL PRIMARY KEY, '
+                       'url VARCHAR (200) UNIQUE NOT NULL, '
+                       'content VARCHAR (500) NOT NULL, '
+                       'site_id SERIAL NOT NULL REFERENCES site(id) ON DELETE CASCADE);')
+
+tracks_query = ('CREATE TABLE IF NOT EXISTS tracks('
+                'user_id SERIAL REFERENCES users(id) ON DELETE CASCADE, '
+                'site_id SERIAL REFERENCES site(id) ON DELETE CASCADE, '
+                'CONSTRAINT tracks_pk PRIMARY KEY (user_id, site_id));')
+
 
 class DBError(Exception):
     pass
@@ -172,27 +194,31 @@ class Storage:
             return bool(tracks_res)
 
 
-async def get_storage(config):
+async def get_engine(config):
     db_config = config.db
-    db = await aiosa.create_engine(database=db_config['name'],
-                                   user=db_config['user'],
-                                   password=db_config['password'],
-                                   host=db_config['host'],
-                                   port=db_config['port'])
-    return Storage(db)
+    engine = await aiosa.create_engine(database=db_config['name'],
+                                       user=db_config['user'],
+                                       password=db_config['password'],
+                                       host=db_config['host'],
+                                       port=db_config['port'])
+    return engine
 
 
 async def cleanup_storage(app):
     await app['storage'].close()
 
 
-async def setup(app, config):
-    app['storage'] = await get_storage(config)
-    app.on_cleanup.append(cleanup_storage)
-
-
 def setup_db(app, config):
     async def _setup(app):
-        app['storage'] = await get_storage(config)
-        app.on_cleanup.append(cleanup_storage)
+        engine = await get_engine(config)
+        app['storage'] = Storage(engine)
+
+        # Create tables.
+        async with engine.acquire() as conn:
+            await conn.execute(user_query)
+            await conn.execute(site_query)
+            await conn.execute(advertisement_query)
+            await conn.execute(tracks_query)
+
     app.on_startup.append(_setup)
+    app.on_cleanup.append(cleanup_storage)
