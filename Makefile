@@ -1,7 +1,6 @@
 ROOT_PATH := $(shell pwd)
 PACKAGE_PATH := $(ROOT_PATH)/src/flatbot
-# export CONFIG_PATH="$(pwd)/config.yml" <- needed in docker-compose.yml
-# export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/cred.json" <- needed in docker-compose.yml
+
 
 .PHONY: cert
 cert:

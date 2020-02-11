@@ -6,7 +6,7 @@ services:
     ports:
       - "8443:8443"
     environment:
-      GOOGLE_APPLICATION_CREDENTIALS cred.json
+      SSL_PATH /flatbot/ssl/
     depends_on:
       - postgres
   postgres:
