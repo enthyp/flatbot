@@ -25,11 +25,13 @@ class Manager:
         for t in trackers:
             self.url2id[t.url] = t.id
             self.trackers[t.id] = t
-
             t.update_handler = self
             t.run()
 
     async def track(self, login, url):
+        if len(self.trackers.keys()) >= self.config.url_limit:
+            raise BadRequest()  # TODO: should somehow give a reason actually
+
         tracker_id = self.url2id.get(url, None)
         if not tracker_id:
             try:
@@ -37,15 +39,19 @@ class Manager:
                 tracker.update_handler = self
                 self.trackers[tracker.id] = tracker
                 self.url2id[url] = tracker.id
-
-                tracker.update_handler = self
                 tracker.run()
             except UnhandledURL:
-                raise
+                raise BadRequest()
         else:
             tracker = self.trackers[tracker_id]
 
-        await tracker.add(login)
+        try:
+            await tracker.add(login)
+        except InvalidOpError:
+            raise BadRequest()
+        except DBError:
+            raise ServerError()
+
         return tracker.id
 
     async def untrack(self, login, url):

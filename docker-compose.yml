@@ -2,7 +2,7 @@ version: '3'
 services:
   server:
     build: .
-    command: bash /flatbot/scripts/run_server.sh
+    command: flatbot-run
     ports:
       - "127.0.0.1:8443:8443"
     volumes:

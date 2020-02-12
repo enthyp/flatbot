@@ -95,15 +95,17 @@ class Storage:
         async with self.db.acquire() as conn:
             site_query = sites.select().where(sites.c.url == url)
             site_res = await conn.execute(site_query)
-
             if not site_res:
                 return None
 
             site = await site_res.fetchone()
             ads_query = advertisements.select().where(advertisements.c.site_id == site.id)
-            ads_res = await conn.execute(ads_query)
-            ads = await ads_res.fetchall()
 
+            ads_res = await conn.execute(ads_query)
+            if not ads_res:
+                return None
+
+            ads = await ads_res.fetchall()
             domain_ads = {Advertisement(a.url, a.content) for a in ads}
             domain_site = Site(site.url, domain_ads)
 
@@ -115,7 +117,7 @@ class Storage:
             site_res = await conn.execute(site_query)
 
             if not site_res:
-                return None
+                return []
 
             return [s[0] for s in await site_res.fetchall()]
 
@@ -157,14 +159,17 @@ class Storage:
             # TODO: fewer DB requests?
             site_res = await conn.execute(sites.select().where(sites.c.url == url))
             if not site_res:
-                raise InvalidOpError()
+                raise DBError()
 
             site = await site_res.fetchone()
             user_res = await conn.execute(users.select().where(users.c.login == login))
-            user = await user_res.fetchone()
+            user = await user_res.fetchone()  # TODO: user should exist but handle failure here too?
 
-            insert_query = tracks.insert().values(site_id=site.id, user_id=user.id)
-            await conn.execute(insert_query)
+            try:
+                insert_query = tracks.insert().values(site_id=site.id, user_id=user.id)
+                await conn.execute(insert_query)
+            except UniqueViolation:
+                raise InvalidOpError()
 
     async def remove_track(self, url, login):
         async with self.db.acquire() as conn:

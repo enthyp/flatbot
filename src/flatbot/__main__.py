@@ -19,7 +19,7 @@ def main():
     setup_bot(app, conf)
 
     context = ssl_context(conf)
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     if context:
         web.run_app(app, port=conf.port, ssl_context=context)
     else:

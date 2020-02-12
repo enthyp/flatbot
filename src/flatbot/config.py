@@ -8,6 +8,7 @@ class Config:
         self.google_cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', None)
         self.db = self._get_db()
         self.scraper = self._get_scraper()
+        self.url_limit = os.getenv('URL_LIMIT', 10)
 
     @staticmethod
     def _get_db():
@@ -30,11 +31,9 @@ class Config:
     def _get_scraper():
         freq = os.getenv('SCRAPER_FREQ', 300)
         item_limit = os.getenv('SCRAPER_ITEM_LIMIT', 10)
-        url_limit = os.getenv('SCRAPER_URL_LIMIT', 10)
         scraper = {
             'frequency': float(freq),
             'item_limit': item_limit,
-            'url_limit': url_limit
         }
 
         return scraper

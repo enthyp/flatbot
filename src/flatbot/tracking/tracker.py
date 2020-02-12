@@ -26,8 +26,6 @@ class Tracker:
                 if updates:
                     logging.info('Tracker {}: got some updates!'.format(self.id))
                     await self.update_handler.handle(self.id, updates)
-                else:
-                    logging.info('Tracker {}: no updates...'.format(self.id))
                 await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
