@@ -10,7 +10,7 @@ cert:
 		-out $(ROOT_PATH)/ssl/cert.pem \
 		-days 90 \
 		-nodes \
-		-subj /CN=$(HOST_IP) \
+		-subj "/CN=192.168.100.106" \
 		-reqexts v3_ca \
 		-config $(ROOT_PATH)/ssl/openssl.cnf
 	@openssl dhparam \
@@ -36,18 +36,10 @@ clean:
 
 
 # Docker #
-
-.PHONY: docker-build
-docker-build:
-	@docker build -t flatbot:latest .
+.PHONY: docker-add-user
+docker-add-user:
+	@docker-compose exec server /flatbot/scripts/add_user.py kuba haslo
 
 .PHONY: docker-run
 docker-run:
-	@docker run --rm \
-		--name fb \
-		--network host \
-		flatbot:latest
-
-.PHONY: dc-build
-dc-build:
-	docker-compose up .
+	@docker-compose up .

@@ -169,7 +169,7 @@ class Storage:
                 insert_query = tracks.insert().values(site_id=site.id, user_id=user.id)
                 await conn.execute(insert_query)
             except UniqueViolation:
-                raise InvalidOpError()
+                pass
 
     async def remove_track(self, url, login):
         async with self.db.acquire() as conn:

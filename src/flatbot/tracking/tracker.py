@@ -40,7 +40,7 @@ class Tracker:
             return current
         else:
             # TODO: handle scraper failure?
-            return None
+            return current # None
 
     async def add(self, login):
         await self.storage.add_track(self.url, login)

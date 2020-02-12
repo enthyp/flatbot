@@ -8,6 +8,8 @@ from flatbot.config import Config
 from flatbot.db.storage import setup_db
 from flatbot.notifications import setup_notifications
 
+logging.basicConfig(level=logging.INFO)
+
 
 def main():
     conf = Config()
@@ -19,8 +21,8 @@ def main():
     setup_bot(app, conf)
 
     context = ssl_context(conf)
-    logging.basicConfig(level=logging.INFO)
     if context:
+        logging.info('Running with SSL...')
         web.run_app(app, port=conf.port, ssl_context=context)
     else:
         web.run_app(app, port=conf.port)
