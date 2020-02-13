@@ -6,28 +6,12 @@ class Config:
     def __init__(self):
         self.port = os.getenv('PORT', 8443)
         self.ssl_path = os.getenv('SSL_PATH', None)
-        self.google_cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', None)
-        self.db = self._get_db()
-        self.scraper = self._get_scraper()
+        self.db_url = os.getenv('DATABASE_URL', None)
         self.url_limit = os.getenv('URL_LIMIT', 10)
 
-    @staticmethod
-    def _get_db():
-        name = os.getenv('POSTGRES_DB', 'db')
-        host = os.getenv('POSTGRES_HOST', 'postgres')
-        port = os.getenv('POSTGRES_PORT', 5432)
-        user = os.getenv('POSTGRES_USER', 'postgres')
-        pwd = os.getenv('POSTGRES_PASSWORD', 'postgres')
-        db = {
-            'name': name,
-            'host': host,
-            'port': port,
-            'user': user,
-            'password': pwd,
-        }
+        self.scraper = self._get_scraper()
+        self._setup_google()
 
-        return db
-    
     @staticmethod
     def _get_scraper():
         freq = os.getenv('SCRAPER_FREQ', 300)
@@ -38,3 +22,13 @@ class Config:
         }
 
         return scraper
+
+    @staticmethod
+    def _setup_google():
+        # This sucks but whatever.
+        cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+        if not os.path.exists(cred_path):
+            logging.info('Saving Google credentials...')
+            google_cred = os.getenv('GOOGLE_CREDENTIALS')
+            with open(cred_path, 'w') as cred_file:
+                cred_file.write(google_cred)

@@ -7,9 +7,8 @@ WORKDIR /flatbot
 COPY src/flatbot src/flatbot
 COPY requirements/production.txt requirements.txt
 COPY setup.py setup.py
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 COPY scripts scripts
-COPY ssl ssl
-COPY .env config.yml
-COPY cred.json cred.json
+
+CMD flatbot-run

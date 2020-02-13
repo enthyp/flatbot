@@ -200,13 +200,7 @@ class Storage:
 
 
 async def get_engine(config):
-    db_config = config.db
-    engine = await aiosa.create_engine(database=db_config['name'],
-                                       user=db_config['user'],
-                                       password=db_config['password'],
-                                       host=db_config['host'],
-                                       port=db_config['port'])
-    return engine
+    return await aiosa.create_engine(config.db_url)
 
 
 async def cleanup_storage(app):

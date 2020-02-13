@@ -1,24 +1,9 @@
 version: '3'
 services:
-  server:
-    build: .
+  web:
     ports:
-      - "8443:8443"
-    volumes:
-    - ./src/flatbot/:/flatbot/src/flatbot
-    env_file: .env
+      - "192.168.100.106:8443:8443"
     environment:
-      POSTGRES_HOST: postgres
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/db"
       PORT: 8443
-      SSL_PATH: /flatbot/ssl/
-      GOOGLE_APPLICATION_CREDENTIALS: /flatbot/cred.json
-    depends_on:
-      - postgres
-    command: flatbot-run
-  postgres:
-    image: "postgres:latest"
-    ports:
-      - "5432:5432"
-    env_file: .env
-    volumes:
-    - ./data/pgdata/:/var/lib/postgresql/data/
+      GOOGLE_CREDENTIALS: ${GOOGLE_CREDENTIALS}
