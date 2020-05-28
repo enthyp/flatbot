@@ -16,16 +16,18 @@ class Config:
     def _get_scraper():
         freq = os.getenv('SCRAPER_FREQ', 300)
         item_limit = os.getenv('SCRAPER_ITEM_LIMIT', 10)
+        burn_in = os.getenv('SCRAPER_BURN_IN', 5)
         scraper = {
             'frequency': float(freq),
             'item_limit': item_limit,
+            'burn_in': burn_in
         }
 
         return scraper
 
     @staticmethod
     def _setup_google():
-        # This sucks but whatever.
+        # At least it works.
         cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
         if not os.path.exists(cred_path):
             logging.info('Saving Google credentials...')

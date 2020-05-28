@@ -3,8 +3,9 @@ Google Firebase Cloud Messaging in service of letting you know about new posting
 Also, Android app receiver of notifications is not here yet.
 
 #### TODOs:
-  * Setup loggers for both API and bot.
-  * Dockerize.
+  * Send updates when someone new tracks?
+    * Others can ignore.
+  * Remove stale updates.
   * Better error handling - e.g. UniqueViolation upon 2nd tracking request.
-  * Cleanup the tests!
+  * Cleanup (and correct - Config especially) the tests!
     * Plenty of 'unit' tests are actually integration tests (using DB)...

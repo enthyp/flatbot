@@ -10,6 +10,7 @@ class Tracker:
         self.id = str(uuid.uuid4())
         self.url = url
         self.freq = config.scraper['frequency']
+        self.init_iter = config.scraper['burn_in']
         self.job = None
 
         self.storage = storage
@@ -20,27 +21,34 @@ class Tracker:
         self.job = asyncio.create_task(self._run())
 
     async def _run(self):
+        await self.burn_in()
+
         try:
             while True:
-                updates = await self.check_updates()
-                if updates:
+                updated = await self.check_updates()
+                if updated:
                     logging.info('Tracker {}: got some updates!'.format(self.id))
-                    await self.update_handler.handle(self.id, updates)
+                    await self.update_handler.handle(self.id, updated)
                 await asyncio.sleep(self.freq)
         except asyncio.CancelledError:
             pass
+
+    async def burn_in(self):
+        for _ in range(self.init_iter):
+            await self.check_updates()
 
     async def check_updates(self):
         current = await self.scraper.run(self.url)
         prev = await self.storage.get_site(self.url)
 
-        if current and not current.ads.issubset(prev.ads):
-            prev.ads.update(current.ads)
-            await self.storage.update_site(self.url, prev)
-            return current
-        else:
-            # TODO: handle scraper failure?
-            return current # None
+        if current:
+            if not current.ads.issubset(prev.ads):
+                prev.ads.update(current.ads)  # TODO: should somehow remove stale ones too! o.O
+                await self.storage.update_site(self.url, prev)
+                return prev  # now current
+            else:
+                return None
+        # TODO: handle scraper failure?
 
     async def add(self, login):
         await self.storage.add_track(self.url, login)
